@@ -23,6 +23,20 @@ public class Solution {
     private static final String TEXT = "Text";
     private static final String INTEGER = "Integer";
 
+    private static Boolean compareSQLExceptions(SQLException e, PostgreSQLErrorCodes error) {
+        int e_val = Integer.valueOf(e.getSQLState());
+        if (error == PostgreSQLErrorCodes.NOT_NULL_VIOLATION) {
+            return e_val == PostgreSQLErrorCodes.NOT_NULL_VIOLATION.getValue();    
+        } else if (error == PostgreSQLErrorCodes.FOREIGN_KEY_VIOLATION) {
+            return e_val == PostgreSQLErrorCodes.FOREIGN_KEY_VIOLATION.getValue();    
+        } else if (error == PostgreSQLErrorCodes.UNIQUE_VIOLATION) {
+            return e_val == PostgreSQLErrorCodes.UNIQUE_VIOLATION.getValue();    
+        } else if (error == PostgreSQLErrorCodes.CHECK_VIOLATION) {
+            return e_val == PostgreSQLErrorCodes.CHECK_VIOLATION.getValue();    
+        } 
+        return false;
+    }
+
     private static void createTable(String statement) {
         Connection connection = DBConnector.getConnection();
         PreparedStatement pstmt = null;
@@ -144,38 +158,45 @@ public class Solution {
         return statement;
     }
 
-    private static PreparedStatement fillValuesInStatement(String statement, Object[] values, Object[] values_types) {
+    private static PreparedStatement fillValuesInStatement(String statement, Object[] values, Object[] values_types) throws SQLException {
+        // This function takes a statement that has (?, ?, ?) and "fills in" the values, so we get ("yossi", 1, "haifa")
         Connection connection = DBConnector.getConnection();
         PreparedStatement pstmt = null;
         try {
+            // Making a statement object from a statement string
             pstmt = connection.prepareStatement(statement);
             for (int i=0; i<values.length; i++) {
                 if (values_types[i] == TEXT) {
                     pstmt.setString(i+1, (String)values[i]);
                 } else if (values_types[i] == INTEGER) {
                     pstmt.setInt(i+1, (int)values[i]);
-                }
+                } 
+                //TODO: complete for other types
             }
-        } catch (Exception e) {
-
+        } catch (SQLException e) {
+            throw e;
         }
         return pstmt;
     }
 
-    private static void addToTable(String table, String[] attributes, Object[] values, Object[] values_types) {
-        /* TODO
-        if (values.length != values_types.length) {
-            throw new Exception("aaa");
-        }
-        */
+    private static ReturnValue addToTable(String table, String[] attributes, Object[] values, Object[] values_types) {
         String statement = prepareAddStatement(table, attributes);
-        PreparedStatement pstmt = fillValuesInStatement(statement, values, values_types);
         try {
+            PreparedStatement pstmt = fillValuesInStatement(statement, values, values_types);
             pstmt.execute();
-        } catch (Exception e) {
-
+        } catch (SQLException e) {
+            if (compareSQLExceptions(e, PostgreSQLErrorCodes.NOT_NULL_VIOLATION)) {
+                return BAD_PARAMS;
+            } else if (compareSQLExceptions(e, PostgreSQLErrorCodes.CHECK_VIOLATION)) {
+                return BAD_PARAMS;
+            } else if (compareSQLExceptions(e, PostgreSQLErrorCodes.UNIQUE_VIOLATION)) {
+                return ALREADY_EXISTS;
+            } else {
+                return ERROR;
+            }
+            //TODO: complete for other error types
         }
-        
+        return OK;
     }
 
     public static void createTables() {
@@ -202,8 +223,7 @@ public class Solution {
         String[] attributes = {"ID", "Semester", "Time", "Room", "Day", "CreditPoints"};
         Object[] values = {test.getId(),test.getSemester(),test.getTime(),test.getRoom(),test.getDay(),test.getCreditPoints()};
         Object[] value_types = {INTEGER, INTEGER, INTEGER, INTEGER, INTEGER, INTEGER};
-        addToTable(TESTS, attributes, values, value_types);
-        return OK;
+        return addToTable(TESTS, attributes, values, value_types);
     }
 
     public static Test getTestProfile(Integer testID, Integer semester) {
