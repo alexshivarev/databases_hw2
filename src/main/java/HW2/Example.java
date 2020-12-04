@@ -16,7 +16,7 @@ public class Example {
 
         //Solution.createTables();
         Test test = new Test();
-        test.setId(-1);
+        test.setId(1);
         test.setSemester(1);
         test.setTime(1);
         test.setRoom(1);

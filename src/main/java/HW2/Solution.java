@@ -223,7 +223,8 @@ public class Solution {
         String[] attributes = {"ID", "Semester", "Time", "Room", "Day", "CreditPoints"};
         Object[] values = {test.getId(),test.getSemester(),test.getTime(),test.getRoom(),test.getDay(),test.getCreditPoints()};
         Object[] value_types = {INTEGER, INTEGER, INTEGER, INTEGER, INTEGER, INTEGER};
-        return addToTable(TESTS, attributes, values, value_types);
+        ReturnValue retval = addToTable(TESTS, attributes, values, value_types);
+        return retval;
     }
 
     public static Test getTestProfile(Integer testID, Integer semester) {
@@ -235,7 +236,11 @@ public class Solution {
     }
 
     public static ReturnValue addStudent(Student student) {
-        return OK;
+        String[] attributes = {"ID", "Name", "Faculty", "CreditPoints"};
+        Object[] values = {student.getId(),student.getName(),student.getFaculty(),student.getCreditPoints()};
+        Object[] value_types = {INTEGER, TEXT, TEXT, INTEGER};
+        ReturnValue retval = addToTable(STUDENTS, attributes, values, value_types);
+        return retval;
     }
 
     public static Student getStudentProfile(Integer studentID) {
@@ -247,7 +252,11 @@ public class Solution {
     }
 
     public static ReturnValue addSupervisor(Supervisor supervisor) {
-        return OK;
+        String[] attributes = {"ID", "Name", "Salary"};
+        Object[] values = {supervisor.getId(),supervisor.getName(),supervisor.getSalary()};
+        Object[] value_types = {INTEGER, TEXT, INTEGER};
+        ReturnValue retval = addToTable(SUPERVISORS, attributes, values, value_types);
+        return retval;
     }
 
     public static Supervisor getSupervisorProfile(Integer supervisorID) {
