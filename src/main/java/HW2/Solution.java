@@ -20,6 +20,8 @@ public class Solution {
     private static final String TESTS = "Tests";
     private static final String STUDENTS = "Students";
     private static final String SUPERVISORS = "Supervisors";
+    private static final String TEXT = "Text";
+    private static final String INTEGER = "Integer";
 
     private static void createTable(String statement) {
         Connection connection = DBConnector.getConnection();
@@ -121,6 +123,61 @@ public class Solution {
                 ")";
     }
 
+    private static String prepareAddStatement(String table, String[] attributes) {
+        String statement = "INSERT INTO " + table + " (";
+        for (int i=0; i<attributes.length; i++) {
+            statement += attributes[i];
+            if (i != attributes.length - 1) {
+                statement += ", ";
+            }
+        }
+        statement += ") ";
+        statement += "VALUES (";
+        for (int i=0; i<attributes.length; i++) {
+            statement += "?";
+            if (i != attributes.length - 1) {
+                statement += ",";
+            }
+        }
+        statement += ")";
+
+        return statement;
+    }
+
+    private static PreparedStatement fillValuesInStatement(String statement, Object[] values, Object[] values_types) {
+        Connection connection = DBConnector.getConnection();
+        PreparedStatement pstmt = null;
+        try {
+            pstmt = connection.prepareStatement(statement);
+            for (int i=0; i<values.length; i++) {
+                if (values_types[i] == TEXT) {
+                    pstmt.setString(i+1, (String)values[i]);
+                } else if (values_types[i] == INTEGER) {
+                    pstmt.setInt(i+1, (int)values[i]);
+                }
+            }
+        } catch (Exception e) {
+
+        }
+        return pstmt;
+    }
+
+    private static void addToTable(String table, String[] attributes, Object[] values, Object[] values_types) {
+        /* TODO
+        if (values.length != values_types.length) {
+            throw new Exception("aaa");
+        }
+        */
+        String statement = prepareAddStatement(table, attributes);
+        PreparedStatement pstmt = fillValuesInStatement(statement, values, values_types);
+        try {
+            pstmt.execute();
+        } catch (Exception e) {
+
+        }
+        
+    }
+
     public static void createTables() {
         InitialState.createInitialState();
         createTable(getStudentsTableStatement());
@@ -142,18 +199,11 @@ public class Solution {
     }
 
     public static ReturnValue addTest(Test test) {
-        if (test.getId() <= 0 || test.getCreditPoints() <= 0 || test.getRoom() <= 0) {
-            return BAD_PARAMS;
-        }
-        if (false) {
-            // check if already exists
-        }
-        try {
-
-        } catch (Exception e) {
-            return ERROR;
-        }
-       return OK;
+        String[] attributes = {"ID", "Semester", "Time", "Room", "Day", "CreditPoints"};
+        Object[] values = {test.getId(),test.getSemester(),test.getTime(),test.getRoom(),test.getDay(),test.getCreditPoints()};
+        Object[] value_types = {INTEGER, INTEGER, INTEGER, INTEGER, INTEGER, INTEGER};
+        addToTable(TESTS, attributes, values, value_types);
+        return OK;
     }
 
     public static Test getTestProfile(Integer testID, Integer semester) {
