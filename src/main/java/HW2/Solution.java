@@ -16,21 +16,143 @@ import static HW2.business.ReturnValue.*;
 
 
 public class Solution {
-    public static void createTables() {
-        InitialState.createInitialState();
-        //create your tables here
+
+    private static final String TESTS = "Tests";
+    private static final String STUDENTS = "Students";
+    private static final String SUPERVISORS = "Supervisors";
+
+    private static void createTable(String statement) {
+        Connection connection = DBConnector.getConnection();
+        PreparedStatement pstmt = null;
+        try {
+            pstmt = connection.prepareStatement(statement);
+            pstmt.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (pstmt != null)
+                    pstmt.close();
+                if (connection != null)
+                    connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
+    private static void clearTable(String table) {
+        Connection connection = DBConnector.getConnection();
+        PreparedStatement pstmt = null;
+        try {
+            pstmt = connection.prepareStatement("DELETE FROM " + table + ";");
+            pstmt.execute();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (pstmt != null)
+                    pstmt.close();
+                if (connection != null)
+                    connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void dropTable(String table) {
+        Connection connection = DBConnector.getConnection();
+        PreparedStatement pstmt = null;
+        try {
+            pstmt = connection.prepareStatement("DROP TABLE IF EXISTS " + table);
+            pstmt.execute();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (pstmt != null)
+                    pstmt.close();
+                if (connection != null)
+                    connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private static String getTestsTableStatement() {
+        return "CREATE TABLE " + TESTS + " ("             +
+                    "ID INTEGER NOT NULL,\n"              +
+                    "Semester INTEGER NOT NULL,\n"        +
+                    "Time INTEGER NOT NULL,\n"            +
+                    "Room INTEGER NOT NULL,\n"            +
+                    "Day INTEGER NOT NULL,\n"             +
+                    "CreditPoints INTEGER NOT NULL,\n"    +
+                    "PRIMARY KEY(ID, SEMESTER),\n"        +
+                    "CHECK(ID>0),\n"                      +
+                    "CHECK(CreditPoints>0),\n"            +
+                    "CHECK(Room>0)"                       +
+                ")";
+    }
+
+    private static String getStudentsTableStatement() {
+        return "CREATE TABLE " + STUDENTS + " ("          +
+                    "ID INTEGER NOT NULL,\n"              +
+                    "Name TEXT NOT NULL,\n"               +
+                    "Faculty TEXT NOT NULL,\n"            +
+                    "CreditPoints INTEGER NOT NULL,\n"    +
+                    "PRIMARY KEY(ID),\n"                  +
+                    "CHECK(ID>0),\n"                      +
+                    "CHECK(CreditPoints>=0)"              +
+                ")";
+    }
+
+    private static String getSupervisorsTableStatement() {
+        return "CREATE TABLE " + SUPERVISORS + " ("       +
+                    "ID INTEGER NOT NULL,\n"              +
+                    "Name TEXT NOT NULL,\n"               +
+                    "Salary INTEGER NOT NULL,\n"          +
+                    "PRIMARY KEY(ID),\n"                  +
+                    "CHECK(ID>0),\n"                      +
+                    "CHECK(Salary>=0)"                    +
+                ")";
+    }
+
+    public static void createTables() {
+        InitialState.createInitialState();
+        createTable(getStudentsTableStatement());
+        createTable(getSupervisorsTableStatement());
+        createTable(getTestsTableStatement());
+    } 
+
     public static void clearTables() {
-        //clear your tables here
+        clearTable(TESTS);
+        clearTable(STUDENTS);
+        clearTable(SUPERVISORS);
     }
 
     public static void dropTables() {
         InitialState.dropInitialState();
-		//drop your tables here
+        dropTable(TESTS);
+        dropTable(STUDENTS);
+        dropTable(SUPERVISORS);
     }
 
     public static ReturnValue addTest(Test test) {
+        if (test.getId() <= 0 || test.getCreditPoints() <= 0 || test.getRoom() <= 0) {
+            return BAD_PARAMS;
+        }
+        if (false) {
+            // check if already exists
+        }
+        try {
+
+        } catch (Exception e) {
+            return ERROR;
+        }
        return OK;
     }
 

@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>cs236363</groupId>
-    <artifactId>236363_spring_20_hw2</artifactId>
+    <artifactId>236363_winter_21_hw2</artifactId>
     <version>1.0</version>
     <build>
         <plugins>
@@ -30,7 +30,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>techbook.Example</mainClass>
+                            <mainClass>HW2.Example</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
@@ -56,7 +56,7 @@
             <version>3.1</version>
             <configuration>
                 <fork>true</fork>
-                <executable>C:\Program Files\Java\jdk1.8.0_211\bin\javac.exe</executable>
+                <executable>/Library/Java/JavaVirtualMachines/jdk1.8.0_271.jdk/Contents/Home/bin/javac</executable>
             </configuration>
         </plugin>
 		

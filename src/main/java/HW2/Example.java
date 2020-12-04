@@ -1,7 +1,8 @@
 package HW2;
 
 import HW2.data.DBConnector;
-
+import HW2.InitialState;
+import HW2.Solution;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,24 +13,23 @@ public class Example {
 
     public static void main(String[] args) {
 
-        javaStringExample();
-        arrayListExample();
-        dropTable();
-        System.out.println("Creating hello_world Table");
-        createTable();
-        selectFromTable();
-        System.out.println("inserting main.data into table");
-        insertIntoTable();
-        selectFromTable();
-        System.out.println("updating main.data in table");
-        updateTable();
-        selectFromTable();
-        System.out.println("deleting main.data from table");
-        deleteFromTable();
-        selectFromTable();
-        dropTable();
-
-
+        Solution.createTables();
+        // javaStringExample();
+        // arrayListExample();
+        // dropTable();
+        // System.out.println("Creating hello_world Table");
+        // createTable();
+        // selectFromTable();
+        // System.out.println("inserting main.data into table");
+        // insertIntoTable();
+        // selectFromTable();
+        // System.out.println("updating main.data in table");
+        // updateTable();
+        // selectFromTable();
+        // System.out.println("deleting main.data from table");
+        // deleteFromTable();
+        // selectFromTable();
+        // dropTable();
     }
 
     private static void deleteFromTable() {
