@@ -17,8 +17,6 @@ public class Example {
     public static void main(String[] args) {
 
         //Solution.createTables();
-        Supervisor supervisor = Solution.getSupervisorProfile(2);
-        System.out.println(supervisor.getId() + supervisor.getName() + supervisor.getSalary());
 
         // javaStringExample();
         // arrayListExample();

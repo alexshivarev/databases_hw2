@@ -306,7 +306,58 @@ public class Solution {
         return test;
     }
 
+    private static String prepareDeleteStatement(String table, Object[] keys, Object[] values) {
+        String statement = "DELETE FROM " + table;
+        for (int i = 0; i < keys.length; i++) {
+                if (i == 0) {
+                    statement += "\nWHERE ";
+                }
+                statement += keys[i];
+                statement += " = ";
+                statement += values[i]; 
+                if (i != keys.length - 1) {
+                    statement += " AND ";
+                }
+            }
+        return statement;
+    }
+
+    private static int deleteFromTable(String table, Object[] keys, Object[] values) {
+        Connection connection = DBConnector.getConnection();
+        PreparedStatement pstmt = null;
+        String statement = prepareDeleteStatement(table, keys, values);
+        int affectedRows = 0;
+        try {
+            pstmt = connection.prepareStatement(statement);
+            affectedRows = pstmt.executeUpdate();
+            System.out.println("deleted " + affectedRows + " rows");
+        } catch (SQLException e) {
+            return -1;
+        }
+        /* TODO: understand what this is for
+        finally {
+            try {
+                pstmt.close();
+            } catch (SQLException e) {
+                //e.printStackTrace()();
+            }
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                //e.printStackTrace()();
+            }
+        }
+        */
+        return affectedRows;
+    }
+
     public static ReturnValue deleteTest(Integer testID, Integer semester) {
+        int affectedRows = deleteFromTable(TESTS, new Object[] {"ID", "Semester"}, new Object[] {testID, semester});
+        if (affectedRows == 0) {
+            return NOT_EXISTS;
+        } else if (affectedRows == -1 ) {
+            return ERROR;
+        }
 		return OK;
     }
 
@@ -337,7 +388,13 @@ public class Solution {
     }
 
     public static ReturnValue deleteStudent(Integer studentID) {
-        return OK;
+        int affectedRows = deleteFromTable(STUDENTS, new Object[] {"ID"}, new Object[] {studentID});
+        if (affectedRows == 0) {
+            return NOT_EXISTS;
+        } else if (affectedRows == -1 ) {
+            return ERROR;
+        }
+		return OK;
     }
 
     public static ReturnValue addSupervisor(Supervisor supervisor) {
@@ -366,7 +423,13 @@ public class Solution {
     }
 
     public static ReturnValue deleteSupervisor(Integer supervisorID) {
-        return OK;
+        int affectedRows = deleteFromTable(SUPERVISORS, new Object[] {"ID"}, new Object[] {supervisorID});
+        if (affectedRows == 0) {
+            return NOT_EXISTS;
+        } else if (affectedRows == -1 ) {
+            return ERROR;
+        }
+		return OK;
     }
 
     public static ReturnValue studentAttendTest(Integer studentID, Integer testID, Integer semester) {
