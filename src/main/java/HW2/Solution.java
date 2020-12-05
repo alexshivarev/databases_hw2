@@ -20,6 +20,8 @@ public class Solution {
     private static final String TESTS = "Tests";
     private static final String STUDENTS = "Students";
     private static final String SUPERVISORS = "Supervisors";
+    private static final String ATTENDS = "Attends";
+    private static final String OVERSEES = "Oversees";
     private static final String TEXT = "Text";
     private static final String INTEGER = "Integer";
 
@@ -35,7 +37,7 @@ public class Solution {
             return e_val == PostgreSQLErrorCodes.CHECK_VIOLATION.getValue();    
         } 
         return false;
-    }
+    } 
 
     private static void createTable(String table) {
         String statement = "";
@@ -45,7 +47,11 @@ public class Solution {
             statement = getStudentsTableStatement();
         } else if (table == SUPERVISORS) {
             statement = getSupervisorsTableStatement();
-        } 
+        }  else if (table == ATTENDS) {
+            statement = getAttendsTableStatement();
+        } else if (table == OVERSEES) {
+            statement = getOverseesTableStatement();
+        }
         Connection connection = DBConnector.getConnection();
         PreparedStatement pstmt = null;
         try {
@@ -108,17 +114,21 @@ public class Solution {
     }
 
     private static String getTestsTableStatement() {
-        return "CREATE TABLE " + TESTS + " ("             +
-                    "ID INTEGER NOT NULL,\n"              +
-                    "Semester INTEGER NOT NULL,\n"        +
-                    "Time INTEGER NOT NULL,\n"            +
-                    "Room INTEGER NOT NULL,\n"            +
-                    "Day INTEGER NOT NULL,\n"             +
-                    "CreditPoints INTEGER NOT NULL,\n"    +
-                    "PRIMARY KEY(ID, SEMESTER),\n"        +
-                    "CHECK(ID>0),\n"                      +
-                    "CHECK(CreditPoints>0),\n"            +
-                    "CHECK(Room>0)"                       +
+        return "CREATE TABLE " + TESTS + " ("               +
+                    "ID INTEGER NOT NULL,\n"                +
+                    "Semester INTEGER NOT NULL,\n"          +
+                    "Time INTEGER NOT NULL,\n"              +
+                    "Room INTEGER NOT NULL,\n"              +
+                    "Day INTEGER NOT NULL,\n"               +
+                    "CreditPoints INTEGER NOT NULL,\n"      +
+                    "PRIMARY KEY(ID, SEMESTER),\n"          +
+                    "CHECK(ID>0),\n"                        +
+                    "CHECK(CreditPoints>0),\n"              +
+                    "CHECK(Room>0),\n"                      +
+                    "CHECK(Semester>=1 AND Semester<=3),\n" +
+                    "CHECK(Time>=1 AND Time<=3),\n"         +
+                    "CHECK(Day>=1 AND Day<=31),\n"          +
+                    "UNIQUE(ID, Semester)"                  +
                 ")";
     }
 
@@ -130,7 +140,8 @@ public class Solution {
                     "CreditPoints INTEGER NOT NULL,\n"    +
                     "PRIMARY KEY(ID),\n"                  +
                     "CHECK(ID>0),\n"                      +
-                    "CHECK(CreditPoints>=0)"              +
+                    "CHECK(CreditPoints>=0),\n"           +
+                    "UNIQUE(ID)"                          +
                 ")";
     }
 
@@ -141,7 +152,38 @@ public class Solution {
                     "Salary INTEGER NOT NULL,\n"          +
                     "PRIMARY KEY(ID),\n"                  +
                     "CHECK(ID>0),\n"                      +
-                    "CHECK(Salary>=0)"                    +
+                    "CHECK(Salary>=0),\n"                 +
+                    "UNIQUE(ID)"                          +
+                ")";
+    }
+
+    private static String getAttendsTableStatement() {
+        return "CREATE TABLE " + ATTENDS + " ("                                         +
+                    "TestID INTEGER NOT NULL,\n"                                        +
+                    "Semester INTEGER NOT NULL,\n"                                      +
+                    "StudentID INTEGER NOT NULL,\n"                                     +            
+                    "CHECK(TestID>0),\n"                                                +
+                    "CHECK(Semester>0),\n"                                              +
+                    "CHECK(StudentID>0),\n"                                             +
+                    "CONSTRAINT fk_tests\n"                                             +
+                    "FOREIGN KEY (TestID, Semester) REFERENCES "                        +
+                    TESTS + "(ID, Semester),\n"                                         +
+                    "CONSTRAINT fk_student\n"                                           +
+                    "FOREIGN KEY (StudentID) REFERENCES " + STUDENTS + "(ID)"           +
+                ")";
+    }
+
+    private static String getOverseesTableStatement() {
+        return "CREATE TABLE " + OVERSEES + " ("          +
+                    "TESTID INTEGER NOT NULL,\n"          +
+                    "SEMESTER INTEGER NOT NULL,\n"        +
+                    "SUPERVISORID INTEGER NOT NULL,\n"    +
+                    "PRIMARY KEY(TESTID),\n"              +
+                    "PRIMARY KEY(SEMESTER),\n"            +
+                    "PRIMARY KEY(SUPERVISORID),\n"        +
+                    "CHECK(TESTID>0),\n"                  +
+                    "CHECK(SEMESTER>0),\n"                +
+                    "CHECK(SUPERVISORID>0)"               +
                 ")";
     }
 
@@ -212,9 +254,13 @@ public class Solution {
         createTable(STUDENTS);
         createTable(SUPERVISORS);
         createTable(TESTS);
+        createTable(ATTENDS);
+        //createTable(OVERSEES);
     } 
 
     public static void clearTables() {
+        clearTable(ATTENDS);
+        clearTable(OVERSEES);
         clearTable(TESTS);
         clearTable(STUDENTS);
         clearTable(SUPERVISORS);
@@ -222,6 +268,8 @@ public class Solution {
 
     public static void dropTables() {
         InitialState.dropInitialState();
+        dropTable(ATTENDS);
+        //dropTable(OVERSEES);
         dropTable(TESTS);
         dropTable(STUDENTS);
         dropTable(SUPERVISORS);

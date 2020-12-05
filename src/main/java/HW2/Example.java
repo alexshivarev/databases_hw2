@@ -15,10 +15,8 @@ import java.util.ArrayList;
 public class Example {
 
     public static void main(String[] args) {
-
-        //Solution.createTables();
-        Test t = Solution.getTestProfile(1,1);
-        System.out.println(t.getId() + t.getSemester());
+        //Solution.dropTables();
+        Solution.createTables();
         // javaStringExample();
         // arrayListExample();
         // dropTable();
