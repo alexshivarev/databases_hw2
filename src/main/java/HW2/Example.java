@@ -16,7 +16,8 @@ public class Example {
 
     public static void main(String[] args) {
         //Solution.dropTables();
-        Solution.createTables();
+        //Solution.createTables();
+        Solution.studentAttendTest(1,1,1);
         // javaStringExample();
         // arrayListExample();
         // dropTable();

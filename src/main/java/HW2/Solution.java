@@ -242,6 +242,7 @@ public class Solution {
             } else if (compareSQLExceptions(e, PostgreSQLErrorCodes.UNIQUE_VIOLATION)) {
                 return ALREADY_EXISTS;
             } else {
+                System.out.println(e);
                 return ERROR;
             }
             //TODO: complete for other error types
@@ -511,7 +512,11 @@ public class Solution {
     }
 
     public static ReturnValue studentAttendTest(Integer studentID, Integer testID, Integer semester) {
-        return OK;
+        String[] attributes = {"StudentID", "TestID", "Semester"};
+        Object[] values = {studentID, testID, semester};
+        Object[] value_types = {INTEGER, INTEGER, INTEGER};
+        ReturnValue retval = addToTable(ATTENDS, attributes, values, value_types);
+        return retval;
     }
 
     public static ReturnValue studentWaiveTest(Integer studentID, Integer testID, Integer semester) {
