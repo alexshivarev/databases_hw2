@@ -17,7 +17,30 @@ public class Example {
     public static void main(String[] args) {
         //Solution.dropTables();
         //Solution.createTables();
-        Solution.studentAttendTest(1,1,1);
+        /*
+        Student s = new Student();
+        s.setId(1);
+        s.setName("yosi");
+        s.setFaculty("cs");
+        s.setCreditPoints(3);
+        Solution.addStudent(s);
+        Test t = new Test();
+        t.setId(1);
+        t.setSemester(1);
+        t.setTime(1);
+        t.setRoom(1);
+        t.setDay(1);
+        t.setCreditPoints(1);
+        Solution.addTest(t);
+        t.setId(2);
+        t.setSemester(2);
+        t.setTime(1);
+        t.setRoom(1);
+        t.setDay(1);
+        t.setCreditPoints(1);
+        Solution.addTest(t);
+        */
+        Solution.studentAttendTest(3,3,3);
         // javaStringExample();
         // arrayListExample();
         // dropTable();

@@ -26,7 +26,14 @@ public class Solution {
     private static final String INTEGER = "Integer";
 
     private static Boolean compareSQLExceptions(SQLException e, PostgreSQLErrorCodes error) {
-        int e_val = Integer.valueOf(e.getSQLState());
+        int e_val = Integer.valueOf(e.getSQLState());  
+        /* for debugging
+        System.out.println("e_val is " + e_val);
+        System.out.println("NOT_NULL_VIOLATION IS " + PostgreSQLErrorCodes.NOT_NULL_VIOLATION.getValue());
+        System.out.println("FOREIGN_KEY_VIOLATION IS " + PostgreSQLErrorCodes.FOREIGN_KEY_VIOLATION.getValue());
+        System.out.println("UNIQUE_VIOLATION IS " + PostgreSQLErrorCodes.UNIQUE_VIOLATION.getValue());
+        System.out.println("CHECK_VIOLATION IS " + PostgreSQLErrorCodes.CHECK_VIOLATION.getValue());
+        */
         if (error == PostgreSQLErrorCodes.NOT_NULL_VIOLATION) {
             return e_val == PostgreSQLErrorCodes.NOT_NULL_VIOLATION.getValue();    
         } else if (error == PostgreSQLErrorCodes.FOREIGN_KEY_VIOLATION) {
@@ -169,7 +176,8 @@ public class Solution {
                     "FOREIGN KEY (TestID, Semester) REFERENCES "                        +
                     TESTS + "(ID, Semester),\n"                                         +
                     "CONSTRAINT fk_student\n"                                           +
-                    "FOREIGN KEY (StudentID) REFERENCES " + STUDENTS + "(ID)"           +
+                    "FOREIGN KEY (StudentID) REFERENCES " + STUDENTS + "(ID),\n"        +
+                    "UNIQUE(TestID, Semester, StudentID)"                               +
                 ")";
     }
 
@@ -241,8 +249,9 @@ public class Solution {
                 return BAD_PARAMS;
             } else if (compareSQLExceptions(e, PostgreSQLErrorCodes.UNIQUE_VIOLATION)) {
                 return ALREADY_EXISTS;
+            } else if (compareSQLExceptions(e, PostgreSQLErrorCodes.FOREIGN_KEY_VIOLATION)) {
+                return NOT_EXISTS;
             } else {
-                System.out.println(e);
                 return ERROR;
             }
             //TODO: complete for other error types
