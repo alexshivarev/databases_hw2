@@ -529,7 +529,14 @@ public class Solution {
     }
 
     public static ReturnValue studentWaiveTest(Integer studentID, Integer testID, Integer semester) {
-        return OK;
+        int affectedRows = deleteFromTable(ATTENDS, new Object[] {"StudentID", "TestID", "Semester"}, 
+                                                    new Object[] {studentID, testID, semester});
+        if (affectedRows == 0) {
+            return NOT_EXISTS;
+        } else if (affectedRows == -1 ) {
+            return ERROR;
+        }
+		return OK;
     }
 
     public static ReturnValue supervisorOverseeTest(Integer supervisorID, Integer testID, Integer semester) {

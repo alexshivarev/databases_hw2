@@ -40,7 +40,8 @@ public class Example {
         t.setCreditPoints(1);
         Solution.addTest(t);
         */
-        Solution.studentAttendTest(3,3,3);
+        //Solution.studentAttendTest(3,3,3);
+        Solution.studentWaiveTest(1,1,1);
         // javaStringExample();
         // arrayListExample();
         // dropTable();
