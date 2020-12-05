@@ -37,7 +37,15 @@ public class Solution {
         return false;
     }
 
-    private static void createTable(String statement) {
+    private static void createTable(String table) {
+        String statement = "";
+        if (table == TESTS) {
+            statement = getTestsTableStatement();
+        } else if (table == STUDENTS) {
+            statement = getStudentsTableStatement();
+        } else if (table == SUPERVISORS) {
+            statement = getSupervisorsTableStatement();
+        } 
         Connection connection = DBConnector.getConnection();
         PreparedStatement pstmt = null;
         try {
@@ -201,9 +209,9 @@ public class Solution {
 
     public static void createTables() {
         InitialState.createInitialState();
-        createTable(getStudentsTableStatement());
-        createTable(getSupervisorsTableStatement());
-        createTable(getTestsTableStatement());
+        createTable(STUDENTS);
+        createTable(SUPERVISORS);
+        createTable(TESTS);
     } 
 
     public static void clearTables() {
@@ -221,14 +229,81 @@ public class Solution {
 
     public static ReturnValue addTest(Test test) {
         String[] attributes = {"ID", "Semester", "Time", "Room", "Day", "CreditPoints"};
-        Object[] values = {test.getId(),test.getSemester(),test.getTime(),test.getRoom(),test.getDay(),test.getCreditPoints()};
+        Object[] values = {test.getId(), test.getSemester(), test.getTime(), test.getRoom(), test.getDay(), test.getCreditPoints()};
         Object[] value_types = {INTEGER, INTEGER, INTEGER, INTEGER, INTEGER, INTEGER};
         ReturnValue retval = addToTable(TESTS, attributes, values, value_types);
         return retval;
     }
 
+    private static String prepareSelectStatement(String table, Object[] attributes_to_select, Object[] attributes_for_where, Object[] values){
+        String attributes_string = "";
+        for (int i = 0; i < attributes_to_select.length; i++) {
+            attributes_string += attributes_to_select[i];
+            if (i != attributes_to_select.length - 1) {
+                attributes_string += ", ";
+            }
+        }
+        String statement = "SELECT " + attributes_string + " FROM " + table;
+        for (int i = 0; i < attributes_for_where.length; i++) {
+                if (i == 0) {
+                    statement += "\nWHERE ";
+                }
+                statement += attributes_for_where[i];
+                statement += " = ";
+                statement += values[i]; 
+                if (i != attributes_for_where.length - 1) {
+                    statement += " AND ";
+                }
+            }
+        return statement;
+    }
+
+    private static ResultSet selectFromDB(String table, Object[] attributes_to_select, Object[] attributes_for_where, Object[] values) {
+        Connection connection = DBConnector.getConnection();
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            String statement = prepareSelectStatement(table, attributes_to_select , attributes_for_where, values);
+            pstmt = connection.prepareStatement(statement);
+            rs = pstmt.executeQuery();
+        } catch (SQLException e) {
+            //e.printStackTrace()();
+        }
+        /* TODO: understand what this is needed for. I copied it from the example.
+        finally {
+            try {
+                pstmt.close();
+            } catch (SQLException e) {
+                //e.printStackTrace()();
+            }
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                //e.printStackTrace()();
+            }
+        }
+        */
+        return rs; 
+    }
+
     public static Test getTestProfile(Integer testID, Integer semester) {
-        return new Test();
+        Test test = new Test();
+        ResultSet rs = selectFromDB(TESTS, new Object[] {"*"}, new Object[] {"ID", "Semester"}, new Object[] {testID, semester});
+        try {
+            if (rs.next() == false) {
+                return Test.badTest();
+            }
+            test.setId(rs.getInt(1));
+            test.setSemester(rs.getInt(2));
+            test.setTime(rs.getInt(3));
+            test.setRoom(rs.getInt(4));
+            test.setDay(rs.getInt(5));
+            test.setCreditPoints(rs.getInt(6));
+            rs.close();
+        } catch (SQLException e) {
+            return Test.badTest();
+        }
+        return test;
     }
 
     public static ReturnValue deleteTest(Integer testID, Integer semester) {
@@ -244,7 +319,21 @@ public class Solution {
     }
 
     public static Student getStudentProfile(Integer studentID) {
-        return new Student();
+        Student student = new Student();
+        ResultSet rs = selectFromDB(STUDENTS, new Object[] {"*"}, new Object[] {"ID"}, new Object[] {studentID});
+        try {
+            if (rs.next() == false) {
+                return Student.badStudent();
+            }
+            student.setId(rs.getInt(1));
+            student.setName(rs.getString(2));
+            student.setFaculty(rs.getString(3));
+            student.setCreditPoints(rs.getInt(4));
+            rs.close();
+        } catch (SQLException e) {
+            return student.badStudent();
+        }
+        return student;
     }
 
     public static ReturnValue deleteStudent(Integer studentID) {
@@ -260,7 +349,20 @@ public class Solution {
     }
 
     public static Supervisor getSupervisorProfile(Integer supervisorID) {
-        return new Supervisor();
+        Supervisor supervisor = new Supervisor();
+        ResultSet rs = selectFromDB(SUPERVISORS, new Object[] {"*"}, new Object[] {"ID"}, new Object[] {supervisorID});
+        try {
+            if (rs.next() == false) {
+                return Supervisor.badSupervisor();
+            }
+            supervisor.setId(rs.getInt(1));
+            supervisor.setName(rs.getString(2));
+            supervisor.setSalary(rs.getInt(3));
+            rs.close();
+        } catch (SQLException e) {
+            return Supervisor.badSupervisor();
+        }
+        return supervisor;
     }
 
     public static ReturnValue deleteSupervisor(Integer supervisorID) {

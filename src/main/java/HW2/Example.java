@@ -4,6 +4,8 @@ import HW2.data.DBConnector;
 import HW2.InitialState;
 import HW2.Solution;
 import HW2.business.Test;
+import HW2.business.Student;
+import HW2.business.Supervisor;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -15,15 +17,8 @@ public class Example {
     public static void main(String[] args) {
 
         //Solution.createTables();
-        Test test = new Test();
-        test.setId(1);
-        test.setSemester(1);
-        test.setTime(1);
-        test.setRoom(1);
-        test.setDay(1);
-        test.setCreditPoints(1);
-
-        Solution.addTest(test);
+        Supervisor supervisor = Solution.getSupervisorProfile(2);
+        System.out.println(supervisor.getId() + supervisor.getName() + supervisor.getSalary());
 
         // javaStringExample();
         // arrayListExample();
