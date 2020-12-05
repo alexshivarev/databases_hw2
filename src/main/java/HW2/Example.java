@@ -15,15 +15,14 @@ import java.util.ArrayList;
 public class Example {
 
     public static void main(String[] args) {
-        //Solution.dropTables();
-        //Solution.createTables();
         /*
-        Student s = new Student();
+        Solution.dropTables();
+        Solution.createTables();
+        Supervisor s = new Supervisor();
         s.setId(1);
         s.setName("yosi");
-        s.setFaculty("cs");
-        s.setCreditPoints(3);
-        Solution.addStudent(s);
+        s.setSalary(80);
+        Solution.addSupervisor(s);
         Test t = new Test();
         t.setId(1);
         t.setSemester(1);
@@ -40,8 +39,7 @@ public class Example {
         t.setCreditPoints(1);
         Solution.addTest(t);
         */
-        //Solution.studentAttendTest(3,3,3);
-        Solution.studentWaiveTest(1,1,1);
+    
         // javaStringExample();
         // arrayListExample();
         // dropTable();

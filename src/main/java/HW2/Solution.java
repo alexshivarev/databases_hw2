@@ -182,16 +182,19 @@ public class Solution {
     }
 
     private static String getOverseesTableStatement() {
-        return "CREATE TABLE " + OVERSEES + " ("          +
-                    "TESTID INTEGER NOT NULL,\n"          +
-                    "SEMESTER INTEGER NOT NULL,\n"        +
-                    "SUPERVISORID INTEGER NOT NULL,\n"    +
-                    "PRIMARY KEY(TESTID),\n"              +
-                    "PRIMARY KEY(SEMESTER),\n"            +
-                    "PRIMARY KEY(SUPERVISORID),\n"        +
-                    "CHECK(TESTID>0),\n"                  +
-                    "CHECK(SEMESTER>0),\n"                +
-                    "CHECK(SUPERVISORID>0)"               +
+        return "CREATE TABLE " + OVERSEES + " ("                                        +
+                    "TestID INTEGER NOT NULL,\n"                                        +
+                    "Semester INTEGER NOT NULL,\n"                                      +
+                    "SupervisorID INTEGER NOT NULL,\n"                                  +
+                    "CHECK(TestID>0),\n"                                                +
+                    "CHECK(Semester>0),\n"                                              +
+                    "CHECK(SupervisorID>0),\n"                                          +
+                    "CONSTRAINT fk_tests\n"                                             +
+                    "FOREIGN KEY (TestID, Semester) REFERENCES "                        +
+                    TESTS + "(ID, Semester),\n"                                         +
+                    "CONSTRAINT fk_supervisor\n"                                        +
+                    "FOREIGN KEY (SupervisorID) REFERENCES " + SUPERVISORS + "(ID),\n"  +
+                    "UNIQUE(TestID, Semester, SupervisorID)"                            +
                 ")";
     }
 
@@ -265,7 +268,7 @@ public class Solution {
         createTable(SUPERVISORS);
         createTable(TESTS);
         createTable(ATTENDS);
-        //createTable(OVERSEES);
+        createTable(OVERSEES);
     } 
 
     public static void clearTables() {
@@ -279,7 +282,7 @@ public class Solution {
     public static void dropTables() {
         InitialState.dropInitialState();
         dropTable(ATTENDS);
-        //dropTable(OVERSEES);
+        dropTable(OVERSEES);
         dropTable(TESTS);
         dropTable(STUDENTS);
         dropTable(SUPERVISORS);
@@ -540,11 +543,22 @@ public class Solution {
     }
 
     public static ReturnValue supervisorOverseeTest(Integer supervisorID, Integer testID, Integer semester) {
-       return OK;
+        String[] attributes = {"SupervisorID", "TestID", "Semester"};
+        Object[] values = {supervisorID, testID, semester};
+        Object[] value_types = {INTEGER, INTEGER, INTEGER};
+        ReturnValue retval = addToTable(OVERSEES, attributes, values, value_types);
+        return retval;
     }
 
     public static ReturnValue supervisorStopsOverseeTest(Integer supervisorID, Integer testID, Integer semester) {
-       return OK;
+        int affectedRows = deleteFromTable(OVERSEES, new Object[] {"SupervisorID", "TestID", "Semester"}, 
+                                                    new Object[] {supervisorID, testID, semester});
+        if (affectedRows == 0) {
+            return NOT_EXISTS;
+        } else if (affectedRows == -1 ) {
+            return ERROR;
+        }
+		return OK;
     }
 
     public static Float averageTestCost() {
