@@ -17,7 +17,8 @@ public class Example {
     public static void main(String[] args) {
 
         //Solution.createTables();
-
+        Test t = Solution.getTestProfile(1,1);
+        System.out.println(t.getId() + t.getSemester());
         // javaStringExample();
         // arrayListExample();
         // dropTable();

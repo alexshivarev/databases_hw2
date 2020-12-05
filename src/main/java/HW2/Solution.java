@@ -263,7 +263,7 @@ public class Solution {
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
-            String statement = prepareSelectStatement(table, attributes_to_select , attributes_for_where, values);
+            String statement = prepareSelectStatement(table, attributes_to_select, attributes_for_where, values);
             pstmt = connection.prepareStatement(statement);
             rs = pstmt.executeQuery();
         } catch (SQLException e) {
@@ -286,13 +286,9 @@ public class Solution {
         return rs; 
     }
 
-    public static Test getTestProfile(Integer testID, Integer semester) {
+    public static Test getTestFromResultSet(ResultSet rs) throws SQLException {
         Test test = new Test();
-        ResultSet rs = selectFromDB(TESTS, new Object[] {"*"}, new Object[] {"ID", "Semester"}, new Object[] {testID, semester});
         try {
-            if (rs.next() == false) {
-                return Test.badTest();
-            }
             test.setId(rs.getInt(1));
             test.setSemester(rs.getInt(2));
             test.setTime(rs.getInt(3));
@@ -300,6 +296,20 @@ public class Solution {
             test.setDay(rs.getInt(5));
             test.setCreditPoints(rs.getInt(6));
             rs.close();
+        } catch (SQLException e) {
+            throw e;
+        }
+        return test;
+    }
+
+    public static Test getTestProfile(Integer testID, Integer semester) {
+        Test test;
+        try {
+            ResultSet rs = selectFromDB(TESTS, new Object[] {"*"}, new Object[] {"ID", "Semester"}, new Object[] {testID, semester});
+            if (rs.next() == false) {
+                return Test.badTest();
+            }
+            test = getTestFromResultSet(rs);
         } catch (SQLException e) {
             return Test.badTest();
         }
@@ -369,20 +379,30 @@ public class Solution {
         return retval;
     }
 
-    public static Student getStudentProfile(Integer studentID) {
+    public static Student getStudentFromResultSet(ResultSet rs) throws SQLException {
         Student student = new Student();
-        ResultSet rs = selectFromDB(STUDENTS, new Object[] {"*"}, new Object[] {"ID"}, new Object[] {studentID});
         try {
-            if (rs.next() == false) {
-                return Student.badStudent();
-            }
             student.setId(rs.getInt(1));
             student.setName(rs.getString(2));
             student.setFaculty(rs.getString(3));
             student.setCreditPoints(rs.getInt(4));
             rs.close();
         } catch (SQLException e) {
-            return student.badStudent();
+            throw e;
+        }
+        return student;
+    }
+
+    public static Student getStudentProfile(Integer studentID) {
+        Student student;
+        try {
+            ResultSet rs = selectFromDB(STUDENTS, new Object[] {"*"}, new Object[] {"ID"}, new Object[] {studentID});
+            if (rs.next() == false) {
+                return Student.badStudent();
+            }
+            student = getStudentFromResultSet(rs);
+        } catch (SQLException e) {
+            return Student.badStudent();
         }
         return student;
     }
@@ -405,17 +425,27 @@ public class Solution {
         return retval;
     }
 
-    public static Supervisor getSupervisorProfile(Integer supervisorID) {
+    public static Supervisor getSupervisorFromResultSet(ResultSet rs) throws SQLException {
         Supervisor supervisor = new Supervisor();
-        ResultSet rs = selectFromDB(SUPERVISORS, new Object[] {"*"}, new Object[] {"ID"}, new Object[] {supervisorID});
         try {
-            if (rs.next() == false) {
-                return Supervisor.badSupervisor();
-            }
             supervisor.setId(rs.getInt(1));
             supervisor.setName(rs.getString(2));
             supervisor.setSalary(rs.getInt(3));
             rs.close();
+        } catch (SQLException e) {
+            throw e;
+        }
+        return supervisor;
+    }
+
+    public static Supervisor getSupervisorProfile(Integer supervisorID) {
+        Supervisor supervisor;
+        try {
+            ResultSet rs = selectFromDB(SUPERVISORS, new Object[] {"*"}, new Object[] {"ID"}, new Object[] {supervisorID});
+            if (rs.next() == false) {
+                return Supervisor.badSupervisor();
+            }
+            supervisor = getSupervisorFromResultSet(rs);
         } catch (SQLException e) {
             return Supervisor.badSupervisor();
         }
