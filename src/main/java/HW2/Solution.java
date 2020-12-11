@@ -57,6 +57,7 @@ public class Solution {
     } 
 
     private static Object executeStatementInDB(String statement, String query_type) throws SQLException {
+        System.out.println(statement);
         Connection connection = DBConnector.getConnection();
         PreparedStatement pstmt = null;
         try {
@@ -215,7 +216,7 @@ public class Solution {
                 ")";
     }
 
-    private static String prepareAddStatement(String table, Object[] attributes, Object[] values) {
+    private static String prepareAddStatement(String table, Object[] attributes, Object[] values, Object[] value_types) {
         String statement = "INSERT INTO " + table + " (";
         for (int i=0; i<attributes.length; i++) {
             statement += attributes[i];
@@ -226,9 +227,15 @@ public class Solution {
         statement += ") ";
         statement += "VALUES (";
         for (int i=0; i<values.length; i++) {
+            if (value_types[i] == TEXT) {
+                statement += "\'";
+            }
             statement += values[i];
+            if (value_types[i] == TEXT) {
+                statement += "\'";
+            }
             if (i != attributes.length - 1) {
-                statement += ",";
+                statement += ", ";
             }
         }
         statement += ")";
@@ -236,8 +243,8 @@ public class Solution {
         return statement;
     }
 
-    private static ReturnValue addToTable(String table, Object[] attributes, Object[] values, Object[] values_types) {
-        String statement = prepareAddStatement(table, attributes, values);
+    private static ReturnValue addToTable(String table, Object[] attributes, Object[] values, Object[] value_types) {
+        String statement = prepareAddStatement(table, attributes, values, value_types);
         try {
             executeStatementInDB(statement, EXECUTE);
         } catch (SQLException e) {
@@ -401,7 +408,6 @@ public class Solution {
         int affectedRows = 0;
         try {
             affectedRows = (int)executeStatementInDB(statement, EXECUTE_UPDATE);
-            System.out.println("deleted " + affectedRows + " rows");
         } catch (SQLException e) {
             return -1;
         }

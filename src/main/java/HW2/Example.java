@@ -15,15 +15,13 @@ import java.util.ArrayList;
 public class Example {
 
     public static void main(String[] args) {
-        //Solution.createView("supervisor_oversees", "SELECT * FROM supervisors S FULL OUTER JOIN oversees O ON S.id = O.supervisorid");
-        /*
         Solution.dropTables();
         Solution.createTables();
         Supervisor s = new Supervisor();
         s.setId(1);
         s.setName("yosi");
         s.setSalary(80);
-        Solution.addSupervisor(s);
+        /*
         Test t = new Test();
         t.setId(1);
         t.setSemester(1);
@@ -39,9 +37,8 @@ public class Example {
         t.setDay(1);
         t.setCreditPoints(1);
         Solution.addTest(t);
+        Solution.supervisorOverseeTest(2,2,2);
         */
-        //Solution.supervisorOverseeTest(2,2,2);
-    
         // javaStringExample();
         // arrayListExample();
         // dropTable();
