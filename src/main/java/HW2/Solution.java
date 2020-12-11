@@ -24,9 +24,16 @@ public class Solution {
     //Relations
     private static final String ATTENDS = "Attends";
     private static final String OVERSEES = "Oversees";
+    //Views
+    private static final String SUPERVISOR_OVERSEES = "supervisor_oversees";
     //Types
     private static final String TEXT = "Text";
     private static final String INTEGER = "Integer";
+    //PostgreSQL query types
+    private static final String EXECUTE = "execute";
+    private static final String EXECUTE_QUERY = "executeQuery";
+    private static final String EXECUTE_UPDATE = "executeUpdate";
+    
 
     private static Boolean compareSQLExceptions(SQLException e, PostgreSQLErrorCodes error) {
         int e_val = Integer.valueOf(e.getSQLState());  
@@ -54,11 +61,11 @@ public class Solution {
         PreparedStatement pstmt = null;
         try {
             pstmt = connection.prepareStatement(statement);
-            if (query_type == "execute") {
+            if (query_type == EXECUTE) {
                 return pstmt.execute();
-            } else if (query_type == "executeQuery") {
+            } else if (query_type == EXECUTE_QUERY) {
                 return pstmt.executeQuery();
-            } else if (query_type == "executeUpdate") {
+            } else if (query_type == EXECUTE_UPDATE) {
                 return pstmt.executeUpdate();
             }
         } catch (SQLException e) {
@@ -76,9 +83,18 @@ public class Solution {
         return null;
     }
 
+
     private static void createView(String name, String description) {
         try {
-            executeStatementInDB("CREATE VIEW " + name + " AS " + description, "execute");
+            executeStatementInDB("CREATE VIEW " + name + " AS " + description, EXECUTE);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void dropView(String name) {
+        try {
+            executeStatementInDB("DROP VIEW " + name, EXECUTE);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -98,7 +114,7 @@ public class Solution {
             statement = getOverseesTableStatement();
         }
         try { 
-            executeStatementInDB(statement, "execute");
+            executeStatementInDB(statement, EXECUTE);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -107,7 +123,7 @@ public class Solution {
 
     private static void clearTable(String table) {
         try { 
-            executeStatementInDB("DELETE FROM " + table, "execute");
+            executeStatementInDB("DELETE FROM " + table, EXECUTE);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -115,7 +131,7 @@ public class Solution {
 
     public static void dropTable(String table) {
         try { 
-            executeStatementInDB("DROP TABLE IF EXISTS " + table, "execute");
+            executeStatementInDB("DROP TABLE IF EXISTS " + table, EXECUTE);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -223,7 +239,7 @@ public class Solution {
     private static ReturnValue addToTable(String table, Object[] attributes, Object[] values, Object[] values_types) {
         String statement = prepareAddStatement(table, attributes, values);
         try {
-            executeStatementInDB(statement, "execute");
+            executeStatementInDB(statement, EXECUTE);
         } catch (SQLException e) {
             if (compareSQLExceptions(e, PostgreSQLErrorCodes.NOT_NULL_VIOLATION)) {
                 return BAD_PARAMS;
@@ -248,6 +264,7 @@ public class Solution {
         createTable(TESTS);
         createTable(ATTENDS);
         createTable(OVERSEES);
+        createView(SUPERVISOR_OVERSEES, "SELECT * FROM supervisors S FULL OUTER JOIN oversees O ON S.id = O.supervisorid");
     } 
 
     public static void clearTables() {
@@ -260,6 +277,7 @@ public class Solution {
 
     public static void dropTables() {
         InitialState.dropInitialState();
+        dropView(SUPERVISOR_OVERSEES);
         dropTable(ATTENDS);
         dropTable(OVERSEES);
         dropTable(TESTS);
@@ -275,34 +293,55 @@ public class Solution {
         return retval;
     }
 
-    private static String prepareSelectStatement(String table, Object[] attributes_to_select, Object[] attributes_for_where, Object[] values){
-        String attributes_string = "";
+    private static String prepareSelectStatement(String table, Object[] attributes_to_select, Object[] attributes_for_where, Object[] values_for_where, Object[] attributes_for_group_by){
+        String select_string = "";
+        String where_string = "";
+        String group_by_string = "";
+
+        // Preparing select part
         for (int i = 0; i < attributes_to_select.length; i++) {
-            attributes_string += attributes_to_select[i];
+            if (i == 0) {
+                select_string += "SELECT ";
+            }
+            select_string += attributes_to_select[i];
             if (i != attributes_to_select.length - 1) {
-                attributes_string += ", ";
+                select_string += ", ";
             }
         }
-        String statement = "SELECT " + attributes_string + " FROM " + table;
+        
+        // Preparing where part
         for (int i = 0; i < attributes_for_where.length; i++) {
-                if (i == 0) {
-                    statement += "\nWHERE ";
-                }
-                statement += attributes_for_where[i];
-                statement += " = ";
-                statement += values[i]; 
-                if (i != attributes_for_where.length - 1) {
-                    statement += " AND ";
-                }
+            if (i == 0) {
+                where_string += "\nWHERE ";
             }
+            where_string += attributes_for_where[i];
+            where_string += " = ";
+            where_string += values_for_where[i]; 
+            if (i != attributes_for_where.length - 1) {
+                where_string += " AND ";
+            }
+        }
+
+        // Preparing group by part
+        for (int i = 0; i < attributes_for_group_by.length; i++) {
+            if (i == 0) {
+                group_by_string += "\nGROUP BY ";
+            }
+            group_by_string += attributes_for_group_by[i];
+            if (i != attributes_for_group_by.length - 1) {
+                group_by_string += ", ";
+            }
+        }
+
+        String statement = select_string + " FROM " + table + where_string + group_by_string;
         return statement;
     }
 
-    private static ResultSet selectFromDB(String table, Object[] attributes_to_select, Object[] attributes_for_where, Object[] values) {
+    private static ResultSet selectFromDB(String table, Object[] attributes_to_select, Object[] attributes_for_where, Object[] values_for_where, Object[] attributes_for_group_by) {
         ResultSet rs = null;
-        String statement = prepareSelectStatement(table, attributes_to_select, attributes_for_where, values);
+        String statement = prepareSelectStatement(table, attributes_to_select, attributes_for_where, values_for_where, attributes_for_group_by);
         try {
-            rs = (ResultSet)executeStatementInDB(statement, "executeQuery");
+            rs = (ResultSet)executeStatementInDB(statement, EXECUTE_QUERY);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -328,7 +367,7 @@ public class Solution {
     public static Test getTestProfile(Integer testID, Integer semester) {
         Test test;
         try {
-            ResultSet rs = selectFromDB(TESTS, new Object[] {"*"}, new Object[] {"ID", "Semester"}, new Object[] {testID, semester});
+            ResultSet rs = selectFromDB(TESTS, new Object[] {"*"}, new Object[] {"ID", "Semester"}, new Object[] {testID, semester}, new Object[] {});
             if (rs.next() == false) {
                 return Test.badTest();
             }
@@ -361,7 +400,7 @@ public class Solution {
         String statement = prepareDeleteStatement(table, keys, values);
         int affectedRows = 0;
         try {
-            affectedRows = (int)executeStatementInDB(statement, "executeUpdate");
+            affectedRows = (int)executeStatementInDB(statement, EXECUTE_UPDATE);
             System.out.println("deleted " + affectedRows + " rows");
         } catch (SQLException e) {
             return -1;
@@ -404,7 +443,7 @@ public class Solution {
     public static Student getStudentProfile(Integer studentID) {
         Student student;
         try {
-            ResultSet rs = selectFromDB(STUDENTS, new Object[] {"*"}, new Object[] {"ID"}, new Object[] {studentID});
+            ResultSet rs = selectFromDB(STUDENTS, new Object[] {"*"}, new Object[] {"ID"}, new Object[] {studentID}, new Object[] {});
             if (rs.next() == false) {
                 return Student.badStudent();
             }
@@ -449,7 +488,7 @@ public class Solution {
     public static Supervisor getSupervisorProfile(Integer supervisorID) {
         Supervisor supervisor;
         try {
-            ResultSet rs = selectFromDB(SUPERVISORS, new Object[] {"*"}, new Object[] {"ID"}, new Object[] {supervisorID});
+            ResultSet rs = selectFromDB(SUPERVISORS, new Object[] {"*"}, new Object[] {"ID"}, new Object[] {supervisorID}, new Object[] {});
             if (rs.next() == false) {
                 return Supervisor.badSupervisor();
             }
@@ -509,14 +548,15 @@ public class Solution {
     }
 
     public static Float averageTestCost() {
-        /*
-        SELECT id, SUM(salary) 
-        FROM
-            (SELECT id, salary, testid
-            FROM supervisors S FULL OUTER JOIN oversees O
-            ON S.id = O.supervisorid) as x
-        GROUP BY id
-        */
+        ResultSet rs;
+        try {
+            rs = selectFromDB(SUPERVISOR_OVERSEES, new Object[] {"id", "SUM(salary)"}, new Object[] {}, new Object[] {}, new Object[] {"id"});
+            if (rs.next() == false) {
+                //return Test.badTest();
+            }
+        } catch (SQLException e) {
+            //return Test.badTest();
+        }
         return 0.0f;
     }
 

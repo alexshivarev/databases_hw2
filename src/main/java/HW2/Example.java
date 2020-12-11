@@ -15,6 +15,7 @@ import java.util.ArrayList;
 public class Example {
 
     public static void main(String[] args) {
+        //Solution.createView("supervisor_oversees", "SELECT * FROM supervisors S FULL OUTER JOIN oversees O ON S.id = O.supervisorid");
         /*
         Solution.dropTables();
         Solution.createTables();
