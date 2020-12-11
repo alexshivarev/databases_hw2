@@ -40,8 +40,10 @@ public class Solution {
         String[] where_conditions = {};
         String[] attributes_to_group_by = {};
         String[] having_conditions = {};
+        String[] order_by = {};
         String alias = "";
         Boolean distinct = false;
+        int limit = -1;
 
         public SelectStatement setTable(String table) {
             this.table = table;
@@ -68,6 +70,11 @@ public class Solution {
             return this;
         }
 
+        public SelectStatement setOrderBy(String[] order_by) {
+            this.order_by = order_by;
+            return this;
+        }
+
         public SelectStatement setAlias(String alias) {
             this.alias = alias;
             return this;
@@ -75,6 +82,11 @@ public class Solution {
 
         public SelectStatement setDistinct(Boolean distinct) {
             this.distinct = distinct;
+            return this;
+        }
+
+        public SelectStatement setLimit(int limit) {
+            this.limit = limit;
             return this;
         }
 
@@ -98,6 +110,10 @@ public class Solution {
             return getQuerySubstatement(this.having_conditions, "HAVING", "AND") + "\n";
         }
 
+        private String getOrderByString() {
+            return getQuerySubstatement(this.order_by, "ORDER BY", ",") + "\n";
+        }
+
         private String getAliasString() {
             if (this.alias != "") {
                 return "AS " + this.alias + "\n";
@@ -112,6 +128,13 @@ public class Solution {
             return "";
         }
 
+        private String getLimitString() {
+            if (this.limit != -1) {
+                return "LIMIT " + this.limit + "\n";
+            }
+            return "";
+        }
+
         public String buildStatement() {
             String statement = "";
             statement += "(";
@@ -122,6 +145,8 @@ public class Solution {
             statement += this.getWhereString();
             statement += this.getGroupByString();
             statement += this.getHavingString();
+            statement += this.getOrderByString();
+            statement += this.getLimitString();
             statement += this.getAliasString();
             statement += ")";
             return statement;
@@ -433,8 +458,8 @@ public class Solution {
         Test test;
         ResultSet rs;
         try {
-            SelectStatement statement = new SelectStatement();
-            statement.setAttributesToSelect(new String[] {"*"})
+            SelectStatement statement = new SelectStatement()
+                     .setAttributesToSelect(new String[] {"*"})
                      .setTable(TESTS)
                      .setWhereConditions(new String[] {"ID = " + testID, "Semester = " + semester});
             rs = (ResultSet)executeStatementInDB(statement.buildStatement(), EXECUTE_QUERY);
@@ -512,8 +537,8 @@ public class Solution {
     public static Student getStudentProfile(Integer studentID) {
         Student student;
         ResultSet rs;
-        SelectStatement statement = new SelectStatement();
-            statement.setAttributesToSelect(new String[] {"*"})
+        SelectStatement statement = new SelectStatement()
+                     .setAttributesToSelect(new String[] {"*"})
                      .setTable(STUDENTS)
                      .setWhereConditions(new String[] {"ID = " + studentID});
         try {
@@ -562,8 +587,8 @@ public class Solution {
     public static Supervisor getSupervisorProfile(Integer supervisorID) {
         Supervisor supervisor;
         ResultSet rs;
-        SelectStatement statement = new SelectStatement();
-            statement.setAttributesToSelect(new String[] {"*"})
+        SelectStatement statement = new SelectStatement()
+                     .setAttributesToSelect(new String[] {"*"})
                      .setTable(SUPERVISORS)
                      .setWhereConditions(new String[] {"ID = " + supervisorID});
         try {
@@ -629,13 +654,13 @@ public class Solution {
     public static Float averageTestCost() {
         ResultSet rs;
         float avg;
-        SelectStatement avg_salary_of_all_tests = new SelectStatement();
-            avg_salary_of_all_tests.setAttributesToSelect(new String[] {"id", "semester", "COALESCE(AVG(salary), 0) as s"})
+        SelectStatement avg_salary_of_all_tests = new SelectStatement()
+                                    .setAttributesToSelect(new String[] {"id", "semester", "COALESCE(AVG(salary), 0) as s"})
                                     .setTable(SUPERVISOR_OVERSEES)
                                     .setHavingConditions(new String[] {"id", "semester"})
                                     .setAlias("average_test_costs");
-        SelectStatement statement = new SelectStatement();
-                           statement.setAttributesToSelect(new String[] {"AVG(s)"})
+        SelectStatement statement = new SelectStatement()
+                                    .setAttributesToSelect(new String[] {"AVG(s)"})
                                     .setTable(avg_salary_of_all_tests.buildStatement());
         try {
             rs = (ResultSet)executeStatementInDB(statement.buildStatement(), EXECUTE_QUERY);
@@ -652,8 +677,8 @@ public class Solution {
     public static Integer getWage(Integer supervisorID) {
         ResultSet rs;
         int count;
-        SelectStatement statement = new SelectStatement();
-                           statement.setAttributesToSelect(new String[] {"SUM(salary)"})
+        SelectStatement statement = new SelectStatement()
+                                    .setAttributesToSelect(new String[] {"SUM(salary)"})
                                     .setTable(SUPERVISOR_OVERSEES)
                                     .setWhereConditions(new String[] {"supervisorID = " + supervisorID});
         try {
@@ -672,13 +697,13 @@ public class Solution {
         ResultSet rs;
         ArrayList<Integer> student_ids = new ArrayList<Integer>();
         String table = "(attends A FULL OUTER JOIN oversees O ON (A.testid = O.testid AND A.semester = O.semester))";
-        SelectStatement statement = new SelectStatement();
-                           statement.setDistinct(true)
+        SelectStatement statement = new SelectStatement()
+                                    .setDistinct(true)
                                     .setAttributesToSelect(new String[] {"studentid", "supervisorid"})
                                     .setTable(table)
+                                    .setOrderBy(new String[] {"studentid DESC"})
                                     .setAttributesToGroupBy(new String[] {"studentid, supervisorid"})
                                     .setHavingConditions(new String[] {"COUNT(supervisorid) > 1"});
-        System.out.println(statement.buildStatement());
         try {
             rs = (ResultSet)executeStatementInDB(statement.buildStatement(), EXECUTE_QUERY);
             while (rs.next() == true) {
@@ -691,7 +716,24 @@ public class Solution {
     }
 
     public static ArrayList<Integer> testsThisSemester(Integer semester) {
-        return new ArrayList<Integer>();
+        ResultSet rs;
+        ArrayList<Integer> test_ids = new ArrayList<Integer>();
+        SelectStatement statement = new SelectStatement()
+                                    .setDistinct(true)
+                                    .setAttributesToSelect(new String[] {"id"})
+                                    .setTable(TESTS)
+                                    .setWhereConditions(new String[] {"semester = " + semester})
+                                    .setOrderBy(new String[] {"id DESC"})
+                                    .setLimit(5);
+        try {
+            rs = (ResultSet)executeStatementInDB(statement.buildStatement(), EXECUTE_QUERY);
+            while (rs.next() == true) {
+                test_ids.add(rs.getInt(1));
+            }
+        } catch (SQLException e) {
+            return new ArrayList<Integer>();
+        }
+        return test_ids;
     }
 
     public static Boolean studentHalfWayThere(Integer studentID) {

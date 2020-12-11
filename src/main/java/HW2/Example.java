@@ -72,10 +72,7 @@ public class Example {
 
         Test tes = Solution.getTestProfile(1,1);
 
-        ArrayList<Integer> a = Solution.supervisorOverseeStudent();
-        for (int i=0; i<a.size(); i++) {
-            System.out.println(a.get(i) + "\n");
-        }
+       System.out.println(Solution.testsThisSemester(1));
 
 
         // javaStringExample();
