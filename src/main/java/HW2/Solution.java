@@ -17,7 +17,7 @@ import static HW2.business.ReturnValue.*;
 
 public class Solution {
 
-    private String getQuerySubstatement(String[] arr, String command, String seperator) {
+    private static String getQuerySubstatement(String[] arr, String command, String seperator) {
         String statement = "";
         for (int i = 0; i < arr.length; i++) {
             if (i == 0) {
@@ -26,6 +26,7 @@ public class Solution {
             }
             statement += arr[i];
             if (i != arr.length - 1) {
+                statement += " ";
                 statement += seperator;
                 statement += " ";
             }
@@ -33,13 +34,13 @@ public class Solution {
         return statement;
     }
 
-    private class SelectStatement {
+    private static class SelectStatement {
         String table;
-        String[] attributes_to_select;
-        String[] where_conditions;
-        String[] attributes_to_group_by;
-        String[] having_conditions;
-        String alias;
+        String[] attributes_to_select = {};
+        String[] where_conditions = {};
+        String[] attributes_to_group_by = {};
+        String[] having_conditions = {};
+        String alias = "";
 
         public SelectStatement setTable(String table) {
             this.table = table;
@@ -71,6 +72,10 @@ public class Solution {
             return this;
         }
 
+        private String getFromString() {
+            return "FROM " + this.table + "\n";
+        }
+
         private String getAttributesString() {
             return getQuerySubstatement(this.attributes_to_select, "", ",") + "\n";
         }
@@ -87,12 +92,24 @@ public class Solution {
             return getQuerySubstatement(this.attributes_to_group_by, "HAVING", "AND") + "\n";
         }
 
+        private String getAliasString() {
+            if (this.alias != "") {
+                return "AS " + this.alias + "\n";
+            }
+            return "";
+        }
+
         public String buildStatement() {
-            String statement = "SELECT ";
+            String statement = "";
+            statement += "(";
+            statement += "SELECT ";
             statement += this.getAttributesString();
+            statement += this.getFromString();
             statement += this.getWhereString();
             statement += this.getGroupByString();
             statement += this.getHavingString();
+            statement += this.getAliasString();
+            statement += ")";
             return statement;
         }
     }
@@ -382,79 +399,6 @@ public class Solution {
         return retval;
     }
 
-    private static String prepareNestedSelectStatement(String table, Object[] attributes_to_select, Object[] attributes_for_where, Object[] values_for_where, Object[] attributes_for_group_by, Object[] having_conditions, String alias) {
-        String statement = "(" + prepareSelectStatement(table, attributes_to_select, attributes_for_where, values_for_where, attributes_for_group_by, having_conditions);
-        statement += (") AS " + alias);
-        return statement;
-    }
-
-    private static String prepareSelectStatement(String table, Object[] attributes_to_select, Object[] attributes_for_where, Object[] values_for_where, Object[] attributes_for_group_by, Object[] having_conditions) {
-        String select_string = "";
-        String where_string = "";
-        String group_by_string = "";
-        String having_string = "";
-
-        // Preparing select part
-        for (int i = 0; i < attributes_to_select.length; i++) {
-            if (i == 0) {
-                select_string += "SELECT ";
-            }
-            select_string += attributes_to_select[i];
-            if (i != attributes_to_select.length - 1) {
-                select_string += ", ";
-            }
-        }
-        
-        // Preparing where part
-        for (int i = 0; i < attributes_for_where.length; i++) {
-            if (i == 0) {
-                where_string += "\nWHERE ";
-            }
-            where_string += attributes_for_where[i];
-            where_string += " = ";
-            where_string += values_for_where[i]; 
-            if (i != attributes_for_where.length - 1) {
-                where_string += " AND ";
-            }
-        }
-
-        // Preparing group by part
-        for (int i = 0; i < attributes_for_group_by.length; i++) {
-            if (i == 0) {
-                group_by_string += "\nGROUP BY ";
-            }
-            group_by_string += attributes_for_group_by[i];
-            if (i != attributes_for_group_by.length - 1) {
-                group_by_string += ", ";
-            }
-        }
-
-        //Preparing having part
-        for (int i = 0; i < having_conditions.length; i++) {
-            if (i == 0) {
-                having_string += "\nHAVING ";
-            }
-            having_string += having_conditions[i];
-            if (i != having_conditions.length - 1) {
-                having_string += " AND ";
-            }
-        }
-
-        String statement = select_string + " FROM " + table + "\n" + where_string + "\n" + group_by_string + "\n" + having_string;
-        return statement;
-    }
-
-    private static ResultSet selectFromDB(String table, Object[] attributes_to_select, Object[] attributes_for_where, Object[] values_for_where, Object[] attributes_for_group_by, Object[] having_conditions) {
-        ResultSet rs = null;
-        String statement = prepareSelectStatement(table, attributes_to_select, attributes_for_where, values_for_where, attributes_for_group_by, having_conditions);
-        try {
-            rs = (ResultSet)executeStatementInDB(statement, EXECUTE_QUERY);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return rs; 
-    }
-
     public static Test getTestFromResultSet(ResultSet rs) throws SQLException {
         Test test = new Test();
         try {
@@ -473,8 +417,13 @@ public class Solution {
 
     public static Test getTestProfile(Integer testID, Integer semester) {
         Test test;
+        ResultSet rs;
         try {
-            ResultSet rs = selectFromDB(TESTS, new Object[] {"*"}, new Object[] {"ID", "Semester"}, new Object[] {testID, semester}, new Object[] {}, new Object[] {});
+            SelectStatement statement = new SelectStatement();
+            statement.setAttributesToSelect(new String[] {"*"})
+                     .setTable(TESTS)
+                     .setWhereConditions(new String[] {"ID = " + testID, "Semester = " + semester});
+            rs = (ResultSet)executeStatementInDB(statement.buildStatement(), EXECUTE_QUERY);
             if (rs.next() == false) {
                 return Test.badTest();
             }
@@ -548,8 +497,13 @@ public class Solution {
 
     public static Student getStudentProfile(Integer studentID) {
         Student student;
+        ResultSet rs;
+        SelectStatement statement = new SelectStatement();
+            statement.setAttributesToSelect(new String[] {"*"})
+                     .setTable(STUDENTS)
+                     .setWhereConditions(new String[] {"ID = " + studentID});
         try {
-            ResultSet rs = selectFromDB(STUDENTS, new Object[] {"*"}, new Object[] {"ID"}, new Object[] {studentID}, new Object[] {}, new Object[] {});
+            rs = (ResultSet)executeStatementInDB(statement.buildStatement(), EXECUTE_QUERY);
             if (rs.next() == false) {
                 return Student.badStudent();
             }
@@ -593,8 +547,13 @@ public class Solution {
 
     public static Supervisor getSupervisorProfile(Integer supervisorID) {
         Supervisor supervisor;
+        ResultSet rs;
+        SelectStatement statement = new SelectStatement();
+            statement.setAttributesToSelect(new String[] {"*"})
+                     .setTable(SUPERVISORS)
+                     .setWhereConditions(new String[] {"ID = " + supervisorID});
         try {
-            ResultSet rs = selectFromDB(SUPERVISORS, new Object[] {"*"}, new Object[] {"ID"}, new Object[] {supervisorID}, new Object[] {}, new Object[] {});
+            rs = (ResultSet)executeStatementInDB(statement.buildStatement(), EXECUTE_QUERY);
             if (rs.next() == false) {
                 return Supervisor.badSupervisor();
             }
@@ -656,9 +615,16 @@ public class Solution {
     public static Float averageTestCost() {
         ResultSet rs;
         float avg;
-        String avg_salary_of_all_tests = prepareNestedSelectStatement(SUPERVISOR_OVERSEES, new Object[] {"id", "semester", "COALESCE(AVG(salary), 0) as s"}, new Object[] {}, new Object[] {}, new Object[] {"id", "semester"}, new Object[] {}, "average_test_costs");
+        SelectStatement avg_salary_of_all_tests = new SelectStatement();
+            avg_salary_of_all_tests.setAttributesToSelect(new String[] {"id", "semester", "COALESCE(AVG(salary), 0) as s"})
+                                    .setTable(SUPERVISOR_OVERSEES)
+                                    .setHavingConditions(new String[] {"id", "semester"})
+                                    .setAlias("average_test_costs");
+        SelectStatement statement = new SelectStatement();
+                           statement.setAttributesToSelect(new String[] {"AVG(s)"})
+                                    .setTable(avg_salary_of_all_tests.buildStatement());
         try {
-            rs = selectFromDB(avg_salary_of_all_tests, new Object[] {"AVG(s)"}, new Object[] {}, new Object[] {}, new Object[] {}, new Object[] {});
+            rs = (ResultSet)executeStatementInDB(statement.buildStatement(), EXECUTE_QUERY);
             if (rs.next() == false) {
                 return -1.0f;
             }
@@ -672,8 +638,12 @@ public class Solution {
     public static Integer getWage(Integer supervisorID) {
         ResultSet rs;
         int count;
+        SelectStatement statement = new SelectStatement();
+                           statement.setAttributesToSelect(new String[] {"SUM(salary)"})
+                                    .setTable(SUPERVISOR_OVERSEES)
+                                    .setWhereConditions(new String[] {"supervisorID = " + supervisorID});
         try {
-            rs = selectFromDB(SUPERVISOR_OVERSEES, new Object[] {"SUM(salary)"}, new Object[] {"supervisorID"}, new Object[] {supervisorID}, new Object[] {}, new Object[] {});
+            rs = (ResultSet)executeStatementInDB(statement.buildStatement(), EXECUTE_QUERY);
             if (rs.next() == false) {
                 return -1;
             }
@@ -687,10 +657,15 @@ public class Solution {
     public static ArrayList<Integer> supervisorOverseeStudent() {
         ResultSet rs;
         ArrayList<Integer> student_ids = new ArrayList<Integer>();
-        String table = "attends A FULL OUTER JOIN oversees O ON (A.testid = O.testid AND A.semester = O.semester)";
+        String table = "(attends A FULL OUTER JOIN oversees O ON (A.testid = O.testid AND A.semester = O.semester))";
+        SelectStatement statement = new SelectStatement();
+                           statement.setAttributesToSelect(new String[] {"studentid", "supervisorid"})
+                                    .setTable(table)
+                                    .setAttributesToGroupBy(new String[] {"studentid, supervisorid"})
+                                    .setHavingConditions(new String[] {"COUNT(supervisorid) > 1"});
         try {
             //TODO: need to add DISTINCT
-            rs = selectFromDB(table, new Object[] {"studentid", "supervisorid"}, new Object[] {}, new Object[] {}, new Object[] {"studentid, supervisorid"}, new Object[] {"COUNT(supervisorid) > 1"});
+            rs = (ResultSet)executeStatementInDB(statement.buildStatement(), EXECUTE_QUERY);
             while (rs.next() == true) {
                 student_ids.add(rs.getInt(1));
             }

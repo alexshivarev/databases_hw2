@@ -70,10 +70,8 @@ public class Example {
         Solution.supervisorOverseeTest(2,1,1);
         Solution.supervisorOverseeTest(2,2,1);
 
-        ArrayList<Integer> a = Solution.supervisorOverseeStudent();
-        for (int i = 0; i < a.size(); i++) {
-            System.out.println(a.get(i));
-        }
+        Test tes = Solution.getTestProfile(1,1);
+        System.out.println(tes.getTime());
         // javaStringExample();
         // arrayListExample();
         // dropTable();
