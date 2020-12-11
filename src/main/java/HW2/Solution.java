@@ -76,6 +76,14 @@ public class Solution {
         return null;
     }
 
+    private static void createView(String name, String description) {
+        try {
+            executeStatementInDB("CREATE VIEW " + name + " AS " + description, "execute");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     private static void createTable(String table) {
         String statement = "";
         if (table == TESTS) {
@@ -99,7 +107,7 @@ public class Solution {
 
     private static void clearTable(String table) {
         try { 
-            executeStatementInDB("DELETE FROM " + table + ";", "execute");
+            executeStatementInDB("DELETE FROM " + table, "execute");
         } catch (SQLException e) {
             e.printStackTrace();
         }
