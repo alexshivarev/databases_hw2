@@ -17,11 +17,14 @@ import static HW2.business.ReturnValue.*;
 
 public class Solution {
 
+    //Tables
     private static final String TESTS = "Tests";
     private static final String STUDENTS = "Students";
     private static final String SUPERVISORS = "Supervisors";
+    //Relations
     private static final String ATTENDS = "Attends";
     private static final String OVERSEES = "Oversees";
+    //Types
     private static final String TEXT = "Text";
     private static final String INTEGER = "Integer";
 
@@ -46,6 +49,33 @@ public class Solution {
         return false;
     } 
 
+    private static Object executeStatementInDB(String statement, String query_type) throws SQLException {
+        Connection connection = DBConnector.getConnection();
+        PreparedStatement pstmt = null;
+        try {
+            pstmt = connection.prepareStatement(statement);
+            if (query_type == "execute") {
+                return pstmt.execute();
+            } else if (query_type == "executeQuery") {
+                return pstmt.executeQuery();
+            } else if (query_type == "executeUpdate") {
+                return pstmt.executeUpdate();
+            }
+        } catch (SQLException e) {
+            throw e;
+        } finally {
+            try {
+                if (pstmt != null)
+                    pstmt.close();
+                if (connection != null)
+                    connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
     private static void createTable(String table) {
         String statement = "";
         if (table == TESTS) {
@@ -59,64 +89,27 @@ public class Solution {
         } else if (table == OVERSEES) {
             statement = getOverseesTableStatement();
         }
-        Connection connection = DBConnector.getConnection();
-        PreparedStatement pstmt = null;
-        try {
-            pstmt = connection.prepareStatement(statement);
-            pstmt.execute();
+        try { 
+            executeStatementInDB(statement, "execute");
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                if (pstmt != null)
-                    pstmt.close();
-                if (connection != null)
-                    connection.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
         }
+        
     }
 
     private static void clearTable(String table) {
-        Connection connection = DBConnector.getConnection();
-        PreparedStatement pstmt = null;
-        try {
-            pstmt = connection.prepareStatement("DELETE FROM " + table + ";");
-            pstmt.execute();
-
+        try { 
+            executeStatementInDB("DELETE FROM " + table + ";", "execute");
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                if (pstmt != null)
-                    pstmt.close();
-                if (connection != null)
-                    connection.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
         }
     }
 
     public static void dropTable(String table) {
-        Connection connection = DBConnector.getConnection();
-        PreparedStatement pstmt = null;
-        try {
-            pstmt = connection.prepareStatement("DROP TABLE IF EXISTS " + table);
-            pstmt.execute();
-
+        try { 
+            executeStatementInDB("DROP TABLE IF EXISTS " + table, "execute");
         } catch (SQLException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                if (pstmt != null)
-                    pstmt.close();
-                if (connection != null)
-                    connection.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
         }
     }
 
@@ -198,7 +191,7 @@ public class Solution {
                 ")";
     }
 
-    private static String prepareAddStatement(String table, String[] attributes) {
+    private static String prepareAddStatement(String table, Object[] attributes, Object[] values) {
         String statement = "INSERT INTO " + table + " (";
         for (int i=0; i<attributes.length; i++) {
             statement += attributes[i];
@@ -208,8 +201,8 @@ public class Solution {
         }
         statement += ") ";
         statement += "VALUES (";
-        for (int i=0; i<attributes.length; i++) {
-            statement += "?";
+        for (int i=0; i<values.length; i++) {
+            statement += values[i];
             if (i != attributes.length - 1) {
                 statement += ",";
             }
@@ -219,32 +212,10 @@ public class Solution {
         return statement;
     }
 
-    private static PreparedStatement fillValuesInStatement(String statement, Object[] values, Object[] values_types) throws SQLException {
-        // This function takes a statement that has (?, ?, ?) and "fills in" the values, so we get ("yossi", 1, "haifa")
-        Connection connection = DBConnector.getConnection();
-        PreparedStatement pstmt = null;
+    private static ReturnValue addToTable(String table, Object[] attributes, Object[] values, Object[] values_types) {
+        String statement = prepareAddStatement(table, attributes, values);
         try {
-            // Making a statement object from a statement string
-            pstmt = connection.prepareStatement(statement);
-            for (int i=0; i<values.length; i++) {
-                if (values_types[i] == TEXT) {
-                    pstmt.setString(i+1, (String)values[i]);
-                } else if (values_types[i] == INTEGER) {
-                    pstmt.setInt(i+1, (int)values[i]);
-                } 
-                //TODO: complete for other types
-            }
-        } catch (SQLException e) {
-            throw e;
-        }
-        return pstmt;
-    }
-
-    private static ReturnValue addToTable(String table, String[] attributes, Object[] values, Object[] values_types) {
-        String statement = prepareAddStatement(table, attributes);
-        try {
-            PreparedStatement pstmt = fillValuesInStatement(statement, values, values_types);
-            pstmt.execute();
+            executeStatementInDB(statement, "execute");
         } catch (SQLException e) {
             if (compareSQLExceptions(e, PostgreSQLErrorCodes.NOT_NULL_VIOLATION)) {
                 return BAD_PARAMS;
@@ -320,30 +291,13 @@ public class Solution {
     }
 
     private static ResultSet selectFromDB(String table, Object[] attributes_to_select, Object[] attributes_for_where, Object[] values) {
-        Connection connection = DBConnector.getConnection();
-        PreparedStatement pstmt = null;
         ResultSet rs = null;
+        String statement = prepareSelectStatement(table, attributes_to_select, attributes_for_where, values);
         try {
-            String statement = prepareSelectStatement(table, attributes_to_select, attributes_for_where, values);
-            pstmt = connection.prepareStatement(statement);
-            rs = pstmt.executeQuery();
+            rs = (ResultSet)executeStatementInDB(statement, "executeQuery");
         } catch (SQLException e) {
-            //e.printStackTrace()();
+            e.printStackTrace();
         }
-        /* TODO: understand what this is needed for. I copied it from the example.
-        finally {
-            try {
-                pstmt.close();
-            } catch (SQLException e) {
-                //e.printStackTrace()();
-            }
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                //e.printStackTrace()();
-            }
-        }
-        */
         return rs; 
     }
 
@@ -399,8 +353,7 @@ public class Solution {
         String statement = prepareDeleteStatement(table, keys, values);
         int affectedRows = 0;
         try {
-            pstmt = connection.prepareStatement(statement);
-            affectedRows = pstmt.executeUpdate();
+            affectedRows = (int)executeStatementInDB(statement, "executeUpdate");
             System.out.println("deleted " + affectedRows + " rows");
         } catch (SQLException e) {
             return -1;
@@ -552,7 +505,7 @@ public class Solution {
 
     public static ReturnValue supervisorStopsOverseeTest(Integer supervisorID, Integer testID, Integer semester) {
         int affectedRows = deleteFromTable(OVERSEES, new Object[] {"SupervisorID", "TestID", "Semester"}, 
-                                                    new Object[] {supervisorID, testID, semester});
+                                                     new Object[] {supervisorID, testID, semester});
         if (affectedRows == 0) {
             return NOT_EXISTS;
         } else if (affectedRows == -1 ) {
@@ -562,6 +515,14 @@ public class Solution {
     }
 
     public static Float averageTestCost() {
+        /*
+        SELECT id, SUM(salary) 
+        FROM
+            (SELECT id, salary, testid
+            FROM supervisors S FULL OUTER JOIN oversees O
+            ON S.id = O.supervisorid) as x
+        GROUP BY id
+        */
         return 0.0f;
     }
 
