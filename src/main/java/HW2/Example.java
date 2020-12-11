@@ -48,17 +48,17 @@ public class Example {
         Student st = new Student();
         st.setId(1);
         st.setName("nitai");
-        st.setFaculty("cs");
-        st.setCreditPoints(3);
+        st.setFaculty("CS");
+        st.setCreditPoints(100);
         Solution.addStudent(st);
         st.setId(2);
         st.setName("dani");
-        st.setFaculty("ee");
+        st.setFaculty("EE");
         st.setCreditPoints(4);
         Solution.addStudent(st);
         st.setId(4);
         st.setName("moshe");
-        st.setFaculty("ie");
+        st.setFaculty("MATH");
         st.setCreditPoints(5);
         Solution.addStudent(st);
 
@@ -72,7 +72,7 @@ public class Example {
 
         Test tes = Solution.getTestProfile(1,1);
 
-       System.out.println(Solution.testsThisSemester(1));
+       System.out.println(Solution.studentHalfWayThere(1));
 
 
         // javaStringExample();

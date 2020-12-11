@@ -212,8 +212,9 @@ public class Solution {
             try {
                 if (pstmt != null)
                     pstmt.close();
-                if (connection != null)
+                if (connection != null) {
                     connection.close();
+                }
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -737,7 +738,18 @@ public class Solution {
     }
 
     public static Boolean studentHalfWayThere(Integer studentID) {
-        return true;
+        ResultSet rs;
+        String table = "(students S FULL OUTER JOIN creditpoints C ON (S.faculty = C.faculty))"; 
+        SelectStatement statement = new SelectStatement()
+                                    .setAttributesToSelect(new String[] {"*"})
+                                    .setTable(table)
+                                    .setWhereConditions(new String[] {"id = " + studentID, "creditpoints >= points/2"});
+        try {
+            rs = (ResultSet)executeStatementInDB(statement.buildStatement(), EXECUTE_QUERY);
+            return rs.next() == true;
+        } catch (SQLException e) {
+            return false;
+        }
     }
 
     public static Integer studentCreditPoints(Integer studentID) {
