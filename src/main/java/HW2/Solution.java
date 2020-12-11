@@ -57,7 +57,6 @@ public class Solution {
     } 
 
     private static Object executeStatementInDB(String statement, String query_type) throws SQLException {
-        System.out.println(statement);
         Connection connection = DBConnector.getConnection();
         PreparedStatement pstmt = null;
         try {
