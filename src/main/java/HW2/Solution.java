@@ -116,7 +116,7 @@ public class Solution {
 
         private String getAliasString() {
             if (this.alias != "") {
-                return "AS " + this.alias + "\n";
+                return " AS " + this.alias + "\n";
             }
             return "";
         }
@@ -147,8 +147,8 @@ public class Solution {
             statement += this.getHavingString();
             statement += this.getOrderByString();
             statement += this.getLimitString();
-            statement += this.getAliasString();
             statement += ")";
+            statement += this.getAliasString();
             return statement;
         }
     }
@@ -753,7 +753,25 @@ public class Solution {
     }
 
     public static Integer studentCreditPoints(Integer studentID) {
-        return 0;
+        ResultSet rs;
+        String table = "((students S FULL OUTER JOIN attends A ON (S.id = A.studentid)) X FULL OUTER JOIN tests T ON (X.testid = T.id))";
+        SelectStatement innerTable = new SelectStatement()
+                                    .setAttributesToSelect(new String[] {"X.creditpoints c1", "T.creditpoints c2"})
+                                    .setTable(table)
+                                    .setWhereConditions(new String[] {"X.id = " + studentID})
+                                    .setAlias("Y");
+        SelectStatement statement = new SelectStatement()
+                                    .setAttributesToSelect(new String[] {"MAX(Y.c1) + SUM(Y.C2)"})
+                                    .setTable(innerTable.buildStatement());
+        try {
+            rs = (ResultSet)executeStatementInDB(statement.buildStatement(), EXECUTE_QUERY);
+            if (rs.next() == false) {
+                return 0;
+            }
+            return rs.getInt(1);
+        } catch (SQLException e) {
+            return 0;
+        }
     }
 
     public static Integer getMostPopularTest(String faculty) {

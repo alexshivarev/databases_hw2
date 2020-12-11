@@ -72,7 +72,7 @@ public class Example {
 
         Test tes = Solution.getTestProfile(1,1);
 
-       System.out.println(Solution.studentHalfWayThere(1));
+       System.out.println(Solution.studentCreditPoints(1));
 
 
         // javaStringExample();
