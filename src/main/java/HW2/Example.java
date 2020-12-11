@@ -18,6 +18,7 @@ public class Example {
         
         Solution.dropTables();
         Solution.createTables();
+
         Supervisor s = new Supervisor();
         s.setId(1);
         s.setName("yosi");
@@ -27,6 +28,7 @@ public class Example {
         s.setName("avi");
         s.setSalary(30);
         Solution.addSupervisor(s);
+
         Test t = new Test();
         t.setId(1);
         t.setSemester(1);
@@ -42,10 +44,36 @@ public class Example {
         t.setDay(1);
         t.setCreditPoints(1);
         Solution.addTest(t);
+
+        Student st = new Student();
+        st.setId(1);
+        st.setName("nitai");
+        st.setFaculty("cs");
+        st.setCreditPoints(3);
+        Solution.addStudent(st);
+        st.setId(2);
+        st.setName("dani");
+        st.setFaculty("ee");
+        st.setCreditPoints(4);
+        Solution.addStudent(st);
+        st.setId(4);
+        st.setName("moshe");
+        st.setFaculty("ie");
+        st.setCreditPoints(5);
+        Solution.addStudent(st);
+
+        Solution.studentAttendTest(1, 1, 1);
+        Solution.studentAttendTest(1, 2, 1);
+
+
         Solution.supervisorOverseeTest(1,1,1);
         Solution.supervisorOverseeTest(2,1,1);
         Solution.supervisorOverseeTest(2,2,1);
-        System.out.println(Solution.getWage(2));
+
+        ArrayList<Integer> a = Solution.supervisorOverseeStudent();
+        for (int i = 0; i < a.size(); i++) {
+            System.out.println(a.get(i));
+        }
         // javaStringExample();
         // arrayListExample();
         // dropTable();

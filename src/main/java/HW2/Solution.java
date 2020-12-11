@@ -302,16 +302,17 @@ public class Solution {
         return retval;
     }
 
-    private static String prepareNestedSelectStatement(String table, Object[] attributes_to_select, Object[] attributes_for_where, Object[] values_for_where, Object[] attributes_for_group_by, String alias) {
-        String statement = "(" + prepareSelectStatement(table, attributes_to_select, attributes_for_where, values_for_where, attributes_for_group_by);
+    private static String prepareNestedSelectStatement(String table, Object[] attributes_to_select, Object[] attributes_for_where, Object[] values_for_where, Object[] attributes_for_group_by, Object[] having_conditions, String alias) {
+        String statement = "(" + prepareSelectStatement(table, attributes_to_select, attributes_for_where, values_for_where, attributes_for_group_by, having_conditions);
         statement += (") AS " + alias);
         return statement;
     }
 
-    private static String prepareSelectStatement(String table, Object[] attributes_to_select, Object[] attributes_for_where, Object[] values_for_where, Object[] attributes_for_group_by){
+    private static String prepareSelectStatement(String table, Object[] attributes_to_select, Object[] attributes_for_where, Object[] values_for_where, Object[] attributes_for_group_by, Object[] having_conditions){
         String select_string = "";
         String where_string = "";
         String group_by_string = "";
+        String having_string = "";
 
         // Preparing select part
         for (int i = 0; i < attributes_to_select.length; i++) {
@@ -348,13 +349,24 @@ public class Solution {
             }
         }
 
-        String statement = select_string + " FROM " + table + "\n" + where_string + "\n" + group_by_string;
+        //Preparing having part
+        for (int i = 0; i < having_conditions.length; i++) {
+            if (i == 0) {
+                having_string += "\nHAVING ";
+            }
+            having_string += having_conditions[i];
+            if (i != having_conditions.length - 1) {
+                having_string += " AND ";
+            }
+        }
+
+        String statement = select_string + " FROM " + table + "\n" + where_string + "\n" + group_by_string + "\n" + having_string;
         return statement;
     }
 
-    private static ResultSet selectFromDB(String table, Object[] attributes_to_select, Object[] attributes_for_where, Object[] values_for_where, Object[] attributes_for_group_by) {
+    private static ResultSet selectFromDB(String table, Object[] attributes_to_select, Object[] attributes_for_where, Object[] values_for_where, Object[] attributes_for_group_by, Object[] having_conditions) {
         ResultSet rs = null;
-        String statement = prepareSelectStatement(table, attributes_to_select, attributes_for_where, values_for_where, attributes_for_group_by);
+        String statement = prepareSelectStatement(table, attributes_to_select, attributes_for_where, values_for_where, attributes_for_group_by, having_conditions);
         try {
             rs = (ResultSet)executeStatementInDB(statement, EXECUTE_QUERY);
         } catch (SQLException e) {
@@ -382,7 +394,7 @@ public class Solution {
     public static Test getTestProfile(Integer testID, Integer semester) {
         Test test;
         try {
-            ResultSet rs = selectFromDB(TESTS, new Object[] {"*"}, new Object[] {"ID", "Semester"}, new Object[] {testID, semester}, new Object[] {});
+            ResultSet rs = selectFromDB(TESTS, new Object[] {"*"}, new Object[] {"ID", "Semester"}, new Object[] {testID, semester}, new Object[] {}, new Object[] {});
             if (rs.next() == false) {
                 return Test.badTest();
             }
@@ -457,7 +469,7 @@ public class Solution {
     public static Student getStudentProfile(Integer studentID) {
         Student student;
         try {
-            ResultSet rs = selectFromDB(STUDENTS, new Object[] {"*"}, new Object[] {"ID"}, new Object[] {studentID}, new Object[] {});
+            ResultSet rs = selectFromDB(STUDENTS, new Object[] {"*"}, new Object[] {"ID"}, new Object[] {studentID}, new Object[] {}, new Object[] {});
             if (rs.next() == false) {
                 return Student.badStudent();
             }
@@ -502,7 +514,7 @@ public class Solution {
     public static Supervisor getSupervisorProfile(Integer supervisorID) {
         Supervisor supervisor;
         try {
-            ResultSet rs = selectFromDB(SUPERVISORS, new Object[] {"*"}, new Object[] {"ID"}, new Object[] {supervisorID}, new Object[] {});
+            ResultSet rs = selectFromDB(SUPERVISORS, new Object[] {"*"}, new Object[] {"ID"}, new Object[] {supervisorID}, new Object[] {}, new Object[] {});
             if (rs.next() == false) {
                 return Supervisor.badSupervisor();
             }
@@ -564,9 +576,9 @@ public class Solution {
     public static Float averageTestCost() {
         ResultSet rs;
         float avg;
-        String avg_salary_of_all_tests = prepareNestedSelectStatement(SUPERVISOR_OVERSEES, new Object[] {"id", "semester", "COALESCE(AVG(salary), 0) as s"}, new Object[] {}, new Object[] {}, new Object[] {"id", "semester"}, "average_test_costs");
+        String avg_salary_of_all_tests = prepareNestedSelectStatement(SUPERVISOR_OVERSEES, new Object[] {"id", "semester", "COALESCE(AVG(salary), 0) as s"}, new Object[] {}, new Object[] {}, new Object[] {"id", "semester"}, new Object[] {}, "average_test_costs");
         try {
-            rs = selectFromDB(avg_salary_of_all_tests, new Object[] {"AVG(s)"}, new Object[] {}, new Object[] {}, new Object[] {});
+            rs = selectFromDB(avg_salary_of_all_tests, new Object[] {"AVG(s)"}, new Object[] {}, new Object[] {}, new Object[] {}, new Object[] {});
             if (rs.next() == false) {
                 return -1.0f;
             }
@@ -581,7 +593,7 @@ public class Solution {
         ResultSet rs;
         int count;
         try {
-            rs = selectFromDB(SUPERVISOR_OVERSEES, new Object[] {"SUM(salary)"}, new Object[] {"supervisorID"}, new Object[] {supervisorID}, new Object[] {});
+            rs = selectFromDB(SUPERVISOR_OVERSEES, new Object[] {"SUM(salary)"}, new Object[] {"supervisorID"}, new Object[] {supervisorID}, new Object[] {}, new Object[] {});
             if (rs.next() == false) {
                 return -1;
             }
@@ -589,12 +601,23 @@ public class Solution {
         } catch (SQLException e) {
             return -1;
         }
-        
         return count;
     }
 
     public static ArrayList<Integer> supervisorOverseeStudent() {
-        return new ArrayList<Integer>();
+        ResultSet rs;
+        ArrayList<Integer> student_ids = new ArrayList<Integer>();
+        String table = "attends A FULL OUTER JOIN oversees O ON (A.testid = O.testid AND A.semester = O.semester)";
+        try {
+            //TODO: need to add DISTINCT
+            rs = selectFromDB(table, new Object[] {"studentid", "supervisorid"}, new Object[] {}, new Object[] {}, new Object[] {"studentid, supervisorid"}, new Object[] {"COUNT(supervisorid) > 1"});
+            while (rs.next() == true) {
+                student_ids.add(rs.getInt(1));
+            }
+        } catch (SQLException e) {
+            return new ArrayList<Integer>();
+        }
+        return student_ids;
     }
 
     public static ArrayList<Integer> testsThisSemester(Integer semester) {
