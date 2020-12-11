@@ -358,20 +358,6 @@ public class Solution {
         } catch (SQLException e) {
             return -1;
         }
-        /* TODO: understand what this is for
-        finally {
-            try {
-                pstmt.close();
-            } catch (SQLException e) {
-                //e.printStackTrace()();
-            }
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                //e.printStackTrace()();
-            }
-        }
-        */
         return affectedRows;
     }
 
