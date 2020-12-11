@@ -17,6 +17,86 @@ import static HW2.business.ReturnValue.*;
 
 public class Solution {
 
+    private String getQuerySubstatement(String[] arr, String command, String seperator) {
+        String statement = "";
+        for (int i = 0; i < arr.length; i++) {
+            if (i == 0) {
+                statement += command;
+                statement += " ";
+            }
+            statement += arr[i];
+            if (i != arr.length - 1) {
+                statement += seperator;
+                statement += " ";
+            }
+        }
+        return statement;
+    }
+
+    private class SelectStatement {
+        String table;
+        String[] attributes_to_select;
+        String[] where_conditions;
+        String[] attributes_to_group_by;
+        String[] having_conditions;
+        String alias;
+
+        public SelectStatement setTable(String table) {
+            this.table = table;
+            return this;
+        }
+
+        public SelectStatement setAttributesToSelect(String[] attributes_to_select) {
+            this.attributes_to_select = attributes_to_select;
+            return this;
+        }
+
+        public SelectStatement setWhereConditions(String[] where_conditions) {
+            this.where_conditions = where_conditions;
+            return this;
+        }
+
+        public SelectStatement setAttributesToGroupBy(String[] attributes_to_group_by) {
+            this.attributes_to_group_by = attributes_to_group_by;
+            return this;
+        }
+
+        public SelectStatement setHavingConditions(String[] having_conditions) {
+            this.having_conditions = having_conditions;
+            return this;
+        }
+
+        public SelectStatement setAlias(String alias) {
+            this.alias = alias;
+            return this;
+        }
+
+        private String getAttributesString() {
+            return getQuerySubstatement(this.attributes_to_select, "", ",") + "\n";
+        }
+
+        private String getWhereString() {
+            return getQuerySubstatement(this.where_conditions, "WHERE", "AND") + "\n";
+        }
+
+        private String getGroupByString() {
+            return getQuerySubstatement(this.attributes_to_group_by, "GROUP BY", ",") + "\n";
+        }
+
+        private String getHavingString() {
+            return getQuerySubstatement(this.attributes_to_group_by, "HAVING", "AND") + "\n";
+        }
+
+        public String buildStatement() {
+            String statement = "SELECT ";
+            statement += this.getAttributesString();
+            statement += this.getWhereString();
+            statement += this.getGroupByString();
+            statement += this.getHavingString();
+            return statement;
+        }
+    }
+
     //Tables
     private static final String TESTS = "Tests";
     private static final String STUDENTS = "Students";
@@ -308,7 +388,7 @@ public class Solution {
         return statement;
     }
 
-    private static String prepareSelectStatement(String table, Object[] attributes_to_select, Object[] attributes_for_where, Object[] values_for_where, Object[] attributes_for_group_by, Object[] having_conditions){
+    private static String prepareSelectStatement(String table, Object[] attributes_to_select, Object[] attributes_for_where, Object[] values_for_where, Object[] attributes_for_group_by, Object[] having_conditions) {
         String select_string = "";
         String where_string = "";
         String group_by_string = "";
