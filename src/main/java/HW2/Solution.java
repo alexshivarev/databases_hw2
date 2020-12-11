@@ -41,6 +41,7 @@ public class Solution {
         String[] attributes_to_group_by = {};
         String[] having_conditions = {};
         String alias = "";
+        Boolean distinct = false;
 
         public SelectStatement setTable(String table) {
             this.table = table;
@@ -72,6 +73,11 @@ public class Solution {
             return this;
         }
 
+        public SelectStatement setDistinct(Boolean distinct) {
+            this.distinct = distinct;
+            return this;
+        }
+
         private String getFromString() {
             return "FROM " + this.table + "\n";
         }
@@ -89,7 +95,7 @@ public class Solution {
         }
 
         private String getHavingString() {
-            return getQuerySubstatement(this.attributes_to_group_by, "HAVING", "AND") + "\n";
+            return getQuerySubstatement(this.having_conditions, "HAVING", "AND") + "\n";
         }
 
         private String getAliasString() {
@@ -99,10 +105,18 @@ public class Solution {
             return "";
         }
 
+        private String getDistinctString() {
+            if (this.distinct) {
+                return "DISTINCT ";
+            }
+            return "";
+        }
+
         public String buildStatement() {
             String statement = "";
             statement += "(";
             statement += "SELECT ";
+            statement += getDistinctString();
             statement += this.getAttributesString();
             statement += this.getFromString();
             statement += this.getWhereString();
@@ -659,12 +673,13 @@ public class Solution {
         ArrayList<Integer> student_ids = new ArrayList<Integer>();
         String table = "(attends A FULL OUTER JOIN oversees O ON (A.testid = O.testid AND A.semester = O.semester))";
         SelectStatement statement = new SelectStatement();
-                           statement.setAttributesToSelect(new String[] {"studentid", "supervisorid"})
+                           statement.setDistinct(true)
+                                    .setAttributesToSelect(new String[] {"studentid", "supervisorid"})
                                     .setTable(table)
                                     .setAttributesToGroupBy(new String[] {"studentid, supervisorid"})
                                     .setHavingConditions(new String[] {"COUNT(supervisorid) > 1"});
+        System.out.println(statement.buildStatement());
         try {
-            //TODO: need to add DISTINCT
             rs = (ResultSet)executeStatementInDB(statement.buildStatement(), EXECUTE_QUERY);
             while (rs.next() == true) {
                 student_ids.add(rs.getInt(1));
