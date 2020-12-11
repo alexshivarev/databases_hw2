@@ -21,7 +21,6 @@ public class Example {
         s.setId(1);
         s.setName("yosi");
         s.setSalary(80);
-        /*
         Test t = new Test();
         t.setId(1);
         t.setSemester(1);
@@ -38,7 +37,6 @@ public class Example {
         t.setCreditPoints(1);
         Solution.addTest(t);
         Solution.supervisorOverseeTest(2,2,2);
-        */
         // javaStringExample();
         // arrayListExample();
         // dropTable();
