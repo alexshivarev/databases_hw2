@@ -15,12 +15,18 @@ import java.util.ArrayList;
 public class Example {
 
     public static void main(String[] args) {
+        
         Solution.dropTables();
         Solution.createTables();
         Supervisor s = new Supervisor();
         s.setId(1);
         s.setName("yosi");
-        s.setSalary(80);
+        s.setSalary(30);
+        Solution.addSupervisor(s);
+        s.setId(2);
+        s.setName("avi");
+        s.setSalary(30);
+        Solution.addSupervisor(s);
         Test t = new Test();
         t.setId(1);
         t.setSemester(1);
@@ -30,13 +36,16 @@ public class Example {
         t.setCreditPoints(1);
         Solution.addTest(t);
         t.setId(2);
-        t.setSemester(2);
+        t.setSemester(1);
         t.setTime(1);
         t.setRoom(1);
         t.setDay(1);
         t.setCreditPoints(1);
         Solution.addTest(t);
-        Solution.supervisorOverseeTest(2,2,2);
+        Solution.supervisorOverseeTest(1,1,1);
+        Solution.supervisorOverseeTest(2,1,1);
+        Solution.supervisorOverseeTest(2,2,1);
+        System.out.println(Solution.getWage(2));
         // javaStringExample();
         // arrayListExample();
         // dropTable();

@@ -70,7 +70,9 @@ public class Solution {
             }
         } catch (SQLException e) {
             throw e;
-        } finally {
+        } 
+        /*
+        finally {
             try {
                 if (pstmt != null)
                     pstmt.close();
@@ -80,13 +82,14 @@ public class Solution {
                 e.printStackTrace();
             }
         }
+        */
         return null;
     }
 
 
     private static void createView(String name, String description) {
         try {
-            executeStatementInDB("CREATE VIEW " + name + " AS " + description, EXECUTE);
+            executeStatementInDB("CREATE VIEW " + name + " AS (" + description + ")", EXECUTE);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -299,6 +302,12 @@ public class Solution {
         return retval;
     }
 
+    private static String prepareNestedSelectStatement(String table, Object[] attributes_to_select, Object[] attributes_for_where, Object[] values_for_where, Object[] attributes_for_group_by, String alias) {
+        String statement = "(" + prepareSelectStatement(table, attributes_to_select, attributes_for_where, values_for_where, attributes_for_group_by);
+        statement += (") AS " + alias);
+        return statement;
+    }
+
     private static String prepareSelectStatement(String table, Object[] attributes_to_select, Object[] attributes_for_where, Object[] values_for_where, Object[] attributes_for_group_by){
         String select_string = "";
         String where_string = "";
@@ -339,7 +348,7 @@ public class Solution {
             }
         }
 
-        String statement = select_string + " FROM " + table + where_string + group_by_string;
+        String statement = select_string + " FROM " + table + "\n" + where_string + "\n" + group_by_string;
         return statement;
     }
 
@@ -554,19 +563,34 @@ public class Solution {
 
     public static Float averageTestCost() {
         ResultSet rs;
+        float avg;
+        String avg_salary_of_all_tests = prepareNestedSelectStatement(SUPERVISOR_OVERSEES, new Object[] {"id", "semester", "COALESCE(AVG(salary), 0) as s"}, new Object[] {}, new Object[] {}, new Object[] {"id", "semester"}, "average_test_costs");
         try {
-            rs = selectFromDB(SUPERVISOR_OVERSEES, new Object[] {"id", "SUM(salary)"}, new Object[] {}, new Object[] {}, new Object[] {"id"});
+            rs = selectFromDB(avg_salary_of_all_tests, new Object[] {"AVG(s)"}, new Object[] {}, new Object[] {}, new Object[] {});
             if (rs.next() == false) {
-                //return Test.badTest();
+                return -1.0f;
             }
+            avg = rs.getFloat(1);
         } catch (SQLException e) {
-            //return Test.badTest();
+            return -1.0f;
         }
-        return 0.0f;
+        return avg;
     }
 
     public static Integer getWage(Integer supervisorID) {
-        return 0;
+        ResultSet rs;
+        int count;
+        try {
+            rs = selectFromDB(SUPERVISOR_OVERSEES, new Object[] {"SUM(salary)"}, new Object[] {"supervisorID"}, new Object[] {supervisorID}, new Object[] {});
+            if (rs.next() == false) {
+                return -1;
+            }
+            count = rs.getInt(1);
+        } catch (SQLException e) {
+            return -1;
+        }
+        
+        return count;
     }
 
     public static ArrayList<Integer> supervisorOverseeStudent() {
