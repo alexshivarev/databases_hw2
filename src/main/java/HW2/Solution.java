@@ -17,23 +17,6 @@ import static HW2.business.ReturnValue.*;
 
 public class Solution {
 
-    private static String getQuerySubstatement(String[] arr, String command, String seperator) {
-        String statement = "";
-        for (int i = 0; i < arr.length; i++) {
-            if (i == 0) {
-                statement += command;
-                statement += " ";
-            }
-            statement += arr[i];
-            if (i != arr.length - 1) {
-                statement += " ";
-                statement += seperator;
-                statement += " ";
-            }
-        }
-        return statement;
-    }
-
     private static class SelectStatement {
         String table;
         String[] attributes_to_select = {};
@@ -162,6 +145,8 @@ public class Solution {
     private static final String OVERSEES = "Oversees";
     //Views
     private static final String SUPERVISOR_OVERSEES = "supervisor_oversees";
+    private static final String TEST_COUNT = "test_count";
+    private static final String STUDENTS_TESTS = "students_tests";
     //Types
     private static final String TEXT = "Text";
     private static final String INTEGER = "Integer";
@@ -170,6 +155,23 @@ public class Solution {
     private static final String EXECUTE_QUERY = "executeQuery";
     private static final String EXECUTE_UPDATE = "executeUpdate";
     
+
+    private static String getQuerySubstatement(String[] arr, String command, String seperator) {
+        String statement = "";
+        for (int i = 0; i < arr.length; i++) {
+            if (i == 0) {
+                statement += command;
+                statement += " ";
+            }
+            statement += arr[i];
+            if (i != arr.length - 1) {
+                statement += " ";
+                statement += seperator;
+                statement += " ";
+            }
+        }
+        return statement;
+    }
 
     private static Boolean compareSQLExceptions(SQLException e, PostgreSQLErrorCodes error) {
         int e_val = Integer.valueOf(e.getSQLState());  
@@ -411,6 +413,8 @@ public class Solution {
         createTable(ATTENDS);
         createTable(OVERSEES);
         createView(SUPERVISOR_OVERSEES, "SELECT * FROM supervisors S FULL OUTER JOIN oversees O ON S.id = O.supervisorid");
+        createView(TEST_COUNT, "SELECT testid, COUNT(testid) FROM attends GROUP BY testid");
+        createView(STUDENTS_TESTS, "SELECT * FROM (ATTENDS A FULL OUTER JOIN (SELECT id, faculty FROM students) S ON S.id = A.studentid) AS STUDENT_ATTENDS_TEST");
     } 
 
     public static void clearTables() {
@@ -423,7 +427,9 @@ public class Solution {
 
     public static void dropTables() {
         InitialState.dropInitialState();
+        dropView(STUDENTS_TESTS);
         dropView(SUPERVISOR_OVERSEES);
+        dropView(TEST_COUNT);
         dropTable(ATTENDS);
         dropTable(OVERSEES);
         dropTable(TESTS);
@@ -755,14 +761,14 @@ public class Solution {
     public static Integer studentCreditPoints(Integer studentID) {
         ResultSet rs;
         String table = "((students S FULL OUTER JOIN attends A ON (S.id = A.studentid)) X FULL OUTER JOIN tests T ON (X.testid = T.id))";
-        SelectStatement innerTable = new SelectStatement()
+        SelectStatement inner_table = new SelectStatement()
                                     .setAttributesToSelect(new String[] {"X.creditpoints c1", "T.creditpoints c2"})
                                     .setTable(table)
                                     .setWhereConditions(new String[] {"X.id = " + studentID})
                                     .setAlias("Y");
         SelectStatement statement = new SelectStatement()
                                     .setAttributesToSelect(new String[] {"MAX(Y.c1) + SUM(Y.C2)"})
-                                    .setTable(innerTable.buildStatement());
+                                    .setTable(inner_table.buildStatement());
         try {
             rs = (ResultSet)executeStatementInDB(statement.buildStatement(), EXECUTE_QUERY);
             if (rs.next() == false) {
@@ -775,7 +781,27 @@ public class Solution {
     }
 
     public static Integer getMostPopularTest(String faculty) {
-        return 0;
+        ResultSet rs;
+        SelectStatement inner_table = new SelectStatement()
+                                    .setAttributesToSelect(new String[] {"DISTINCT testid", "COUNT(studentid)"})
+                                    .setTable(STUDENTS_TESTS)
+                                    .setWhereConditions(new String[] {"faculty = '" + faculty + "'"})
+                                    .setAttributesToGroupBy(new String[] {"testid"})
+                                    .setOrderBy(new String[] {"count DESC", "testid DESC"})
+                                    .setLimit(1)
+                                    .setAlias("X");
+        SelectStatement statement = new SelectStatement()
+                                    .setAttributesToSelect(new String[] {"testid"})
+                                    .setTable(inner_table.buildStatement());
+        try {
+            rs = (ResultSet)executeStatementInDB(statement.buildStatement(), EXECUTE_QUERY);
+            if (rs.next() == false) {
+                return 0;
+            }
+            return rs.getInt(1);
+        } catch (SQLException e) {
+            return 0;
+        }
     }
 
     public static ArrayList<Integer> getConflictingTests() {

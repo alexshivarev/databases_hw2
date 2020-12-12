@@ -17,8 +17,9 @@ public class Example {
     public static void main(String[] args) {
         
         Solution.dropTables();
+        
         Solution.createTables();
-
+        
         Supervisor s = new Supervisor();
         s.setId(1);
         s.setName("yosi");
@@ -44,6 +45,13 @@ public class Example {
         t.setDay(1);
         t.setCreditPoints(1);
         Solution.addTest(t);
+        t.setId(1);
+        t.setSemester(2);
+        t.setTime(1);
+        t.setRoom(1);
+        t.setDay(1);
+        t.setCreditPoints(1);
+        Solution.addTest(t);
 
         Student st = new Student();
         st.setId(1);
@@ -64,6 +72,7 @@ public class Example {
 
         Solution.studentAttendTest(1, 1, 1);
         Solution.studentAttendTest(1, 2, 1);
+        Solution.studentAttendTest(1, 1, 2);
 
 
         Solution.supervisorOverseeTest(1,1,1);
@@ -72,7 +81,7 @@ public class Example {
 
         Test tes = Solution.getTestProfile(1,1);
 
-       System.out.println(Solution.studentCreditPoints(1));
+        System.out.println(Solution.getMostPopularTest("CS"));
 
 
         // javaStringExample();
@@ -91,6 +100,7 @@ public class Example {
         // deleteFromTable();
         // selectFromTable();
         // dropTable();
+        
     }
 
     private static void deleteFromTable() {
