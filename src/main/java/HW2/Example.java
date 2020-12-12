@@ -81,7 +81,10 @@ public class Example {
 
         Test tes = Solution.getTestProfile(1,1);
 
-        System.out.println(Solution.getMostPopularTest("CS"));
+        ArrayList<Integer> arr = Solution.getConflictingTests();
+        for (int i=0; i<arr.size(); i++) {
+            System.out.println(arr.get(i));
+        }
 
 
         // javaStringExample();

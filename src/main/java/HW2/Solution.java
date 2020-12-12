@@ -146,7 +146,8 @@ public class Solution {
     //Views
     private static final String SUPERVISOR_OVERSEES = "supervisor_oversees";
     private static final String TEST_COUNT = "test_count";
-    private static final String STUDENTS_TESTS = "students_tests";
+    private static final String STUDENTS_ATTENDS = "students_attends";
+    private static final String STUDENTS_ATTENDS_TESTS = "students_attends_tests";
     //Types
     private static final String TEXT = "Text";
     private static final String INTEGER = "Integer";
@@ -414,7 +415,8 @@ public class Solution {
         createTable(OVERSEES);
         createView(SUPERVISOR_OVERSEES, "SELECT * FROM supervisors S FULL OUTER JOIN oversees O ON S.id = O.supervisorid");
         createView(TEST_COUNT, "SELECT testid, COUNT(testid) FROM attends GROUP BY testid");
-        createView(STUDENTS_TESTS, "SELECT * FROM (ATTENDS A FULL OUTER JOIN (SELECT id, faculty FROM students) S ON S.id = A.studentid) AS STUDENT_ATTENDS_TEST");
+        createView(STUDENTS_ATTENDS, "SELECT * FROM (ATTENDS A FULL OUTER JOIN (SELECT id, faculty FROM students) S ON S.id = A.studentid)");
+        createView(STUDENTS_ATTENDS_TESTS, "SELECT * FROM ((students S FULL OUTER JOIN attends A ON (S.id = A.studentid)) X FULL OUTER JOIN tests T ON (X.testid = T.id))");
     } 
 
     public static void clearTables() {
@@ -427,7 +429,8 @@ public class Solution {
 
     public static void dropTables() {
         InitialState.dropInitialState();
-        dropView(STUDENTS_TESTS);
+        dropView(STUDENTS_ATTENDS_TESTS);
+        dropView(STUDENTS_ATTENDS);
         dropView(SUPERVISOR_OVERSEES);
         dropView(TEST_COUNT);
         dropTable(ATTENDS);
@@ -784,7 +787,7 @@ public class Solution {
         ResultSet rs;
         SelectStatement inner_table = new SelectStatement()
                                     .setAttributesToSelect(new String[] {"DISTINCT testid", "COUNT(studentid)"})
-                                    .setTable(STUDENTS_TESTS)
+                                    .setTable(STUDENTS_ATTENDS)
                                     .setWhereConditions(new String[] {"faculty = '" + faculty + "'"})
                                     .setAttributesToGroupBy(new String[] {"testid"})
                                     .setOrderBy(new String[] {"count DESC", "testid DESC"})
@@ -805,7 +808,22 @@ public class Solution {
     }
 
     public static ArrayList<Integer> getConflictingTests() {
-        return new ArrayList<Integer>();
+        ResultSet rs;
+        ArrayList<Integer> test_ids = new ArrayList<Integer>();
+        String table = "tests A LEFT OUTER JOIN tests B ON (A.id <> B.id AND A.day=B.day AND A.time=B.time AND A.semester=B.semester)";
+        SelectStatement statement = new SelectStatement()
+                                    .setAttributesToSelect(new String[] {"A.id"})
+                                    .setTable(table)
+                                    .setOrderBy(new String[] {"A.id ASC"});
+        try {
+            rs = (ResultSet)executeStatementInDB(statement.buildStatement(), EXECUTE_QUERY);
+            while (rs.next() == true) {
+                test_ids.add(rs.getInt(1));
+            }
+        } catch (SQLException e) {
+            return new ArrayList<Integer>();
+        }
+        return test_ids;
     }
 
     public static ArrayList<Integer> graduateStudents() {
