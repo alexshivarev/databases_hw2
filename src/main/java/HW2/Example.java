@@ -73,6 +73,9 @@ public class Example {
         Solution.studentAttendTest(1, 1, 1);
         Solution.studentAttendTest(1, 2, 1);
         Solution.studentAttendTest(1, 1, 2);
+        Solution.studentAttendTest(2, 1, 1);
+        Solution.studentAttendTest(4, 1, 1);
+        Solution.studentAttendTest(4, 2, 1);
 
 
         Solution.supervisorOverseeTest(1,1,1);
@@ -81,7 +84,7 @@ public class Example {
 
         Test tes = Solution.getTestProfile(1,1);
 
-        ArrayList<Integer> arr = Solution.graduateStudents();
+        ArrayList<Integer> arr = Solution.getCloseStudents(1);
         for (int i=0; i<arr.size(); i++) {
             System.out.println(arr.get(i));
         }

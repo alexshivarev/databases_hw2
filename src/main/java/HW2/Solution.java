@@ -853,7 +853,37 @@ public class Solution {
     }
 
     public static ArrayList<Integer> getCloseStudents(Integer studentID) {
-        return new ArrayList<Integer>();
+        ResultSet rs;
+        ArrayList<Integer> student_ids = new ArrayList<Integer>();
+        SelectStatement inner_table1 = new SelectStatement()
+                                        .setAttributesToSelect(new String[] {"A.studentid id1", "B.studentid id2"})
+                                        .setTable("attends A FULL OUTER JOIN attends B ON A.semester = B.semester AND A.testid = B.testid")
+                                        .setWhereConditions(new String[] {"A.studentid <> B.studentid", "A.studentid <> " + studentID})
+                                        .setAlias("Z");
+        SelectStatement inner_table2 = new SelectStatement()
+                                        .setAttributesToSelect(new String[] {"id1", "COUNT(id1)"})
+                                        .setTable(inner_table1.buildStatement())
+                                        .setWhereConditions(new String[] {"id2 = " + studentID})
+                                        .setAttributesToGroupBy(new String[] {"id1"})
+                                        .setAlias("X");
+        SelectStatement inner_table3 = new SelectStatement()
+                                        .setAttributesToSelect(new String[] {"COUNT(studentid)"})
+                                        .setTable(ATTENDS)
+                                        .setWhereConditions(new String[] {"studentid = " + studentID});
+        SelectStatement statement = new SelectStatement()
+                                        .setAttributesToSelect(new String[] {"id1"})
+                                        .setTable(inner_table2.buildStatement())
+                                        .setWhereConditions(new String[] {"count >= " + inner_table3.buildStatement() + "/2.0"})
+                                        .setLimit(10);
+        try {
+            rs = (ResultSet)executeStatementInDB(statement.buildStatement(), EXECUTE_QUERY);
+            while (rs.next() == true) {
+                student_ids.add(rs.getInt(1));
+            }
+        } catch (SQLException e) {
+            return new ArrayList<Integer>();
+        }
+        return student_ids;
     }
 }
 
