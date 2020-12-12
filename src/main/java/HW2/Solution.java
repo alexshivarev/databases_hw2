@@ -416,7 +416,7 @@ public class Solution {
         createView(SUPERVISOR_OVERSEES, "SELECT * FROM supervisors S FULL OUTER JOIN oversees O ON S.id = O.supervisorid");
         createView(TEST_COUNT, "SELECT testid, COUNT(testid) FROM attends GROUP BY testid");
         createView(STUDENTS_ATTENDS, "SELECT * FROM (ATTENDS A FULL OUTER JOIN (SELECT id, faculty FROM students) S ON S.id = A.studentid)");
-        createView(STUDENTS_ATTENDS_TESTS, "SELECT * FROM ((students S FULL OUTER JOIN attends A ON (S.id = A.studentid)) X FULL OUTER JOIN tests T ON (X.testid = T.id))");
+        createView(STUDENTS_ATTENDS_TESTS, "SELECT X.id, name, faculty, X.creditpoints scred, testid, studentid, T.semester, time, room, day, T.creditpoints tcred FROM ((students S FULL OUTER JOIN attends A ON (S.id = A.studentid)) X FULL OUTER JOIN tests T ON (X.testid = T.id))");
     } 
 
     public static void clearTables() {
@@ -827,7 +827,29 @@ public class Solution {
     }
 
     public static ArrayList<Integer> graduateStudents() {
-        return new ArrayList<Integer>();
+        ResultSet rs;
+        ArrayList<Integer> student_ids = new ArrayList<Integer>();
+        String table = "STUDENTS_ATTENDS_TESTS S FULL OUTER JOIN creditpoints C ON (S.faculty = C.faculty)";
+        SelectStatement inner_table = new SelectStatement()
+                                    .setAttributesToSelect(new String[] {"DISTINCT id", "S.faculty", "SUM(tcred) + MAX(scred) totalcred", "MAX(points) points"})
+                                    .setTable(table)
+                                    .setAttributesToGroupBy(new String [] {"id", "S.faculty"})
+                                    .setAlias("O");
+        SelectStatement statement = new SelectStatement()
+                                    .setAttributesToSelect(new String[] {"id"})
+                                    .setTable(inner_table.buildStatement())
+                                    .setWhereConditions(new String[] {"totalcred >= points"})
+                                    .setLimit(5)
+                                    .setOrderBy(new String[] {"id ASC"});
+        try {
+            rs = (ResultSet)executeStatementInDB(statement.buildStatement(), EXECUTE_QUERY);
+            while (rs.next() == true) {
+                student_ids.add(rs.getInt(1));
+            }
+        } catch (SQLException e) {
+            return new ArrayList<Integer>();
+        }
+        return student_ids;
     }
 
     public static ArrayList<Integer> getCloseStudents(Integer studentID) {

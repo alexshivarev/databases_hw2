@@ -36,7 +36,7 @@ public class Example {
         t.setTime(1);
         t.setRoom(1);
         t.setDay(1);
-        t.setCreditPoints(1);
+        t.setCreditPoints(70);
         Solution.addTest(t);
         t.setId(2);
         t.setSemester(1);
@@ -81,7 +81,7 @@ public class Example {
 
         Test tes = Solution.getTestProfile(1,1);
 
-        ArrayList<Integer> arr = Solution.getConflictingTests();
+        ArrayList<Integer> arr = Solution.graduateStudents();
         for (int i=0; i<arr.size(); i++) {
             System.out.println(arr.get(i));
         }
